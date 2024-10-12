@@ -53,7 +53,7 @@ class Turtle_Robot_Node(Node):
         pass
     
     def goal_callback(self):
-        
+        pass
     
 def main(args=None):
     """Entrypoint for the mynode ROS node."""

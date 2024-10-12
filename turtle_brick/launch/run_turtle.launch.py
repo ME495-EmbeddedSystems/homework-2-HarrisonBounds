@@ -17,7 +17,7 @@ def generate_launch_description():
     Node(
         package='turtle_brick',
         namespace='turtle_bot',
-        executable='turtle_robot',
+        executable='turtle_bot_node',
         name='turtle_bot_node',
     ),
     

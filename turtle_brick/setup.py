@@ -9,7 +9,7 @@ setup(
     data_files=[
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
-        ('share/' + package_name, ['package.xml', 'urdf/turtle.urdf', 'launch/show_turtle.launch.py', 'config/view_robot.rviz']),
+        ('share/' + package_name, ['package.xml', 'urdf/turtle.urdf', 'launch/show_turtle.launch.py', 'config/view_robot.rviz', 'launch/run_turtle.launch.py']),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -20,7 +20,9 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'turtle_bot_node = turtle_brick.turtle_bot_node:main'
+            #Name = <pkg_name>.<module_name>:<function_to_run>
+            #Use this name for your executable in your launch file!!
+            'turtle_bot_node = turtle_brick.turtle_robot:main'
         ],
     },
 )
