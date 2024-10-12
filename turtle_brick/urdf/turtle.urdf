@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<robot name="turtle_bot">
+  <link name="base_link">
+    <visual>
+      <origin xyz="0 0 0.3" rpy="0 0 0"/> <!-- Centered box half above the origin -->
+      <geometry>
+        <box size="0.5 0.5 0.5"/>
+      </geometry>
+      <material name="White">
+        <color rgba="1 1 1 1"/>
+      </material>
+    </visual>
+  </link>
+
+  <link name="platform">
+    <visual>
+      <origin xyz="0 0 2" rpy="0 0 0"/>
+      <geometry>
+        <cylinder length="0.2" radius="1"/>
+      </geometry>
+      <material name="Red">
+        <color rgba="1 0 0 1"/>
+      </material>
+    </visual>
+  </link>
+
+  <joint name="base_to_platform" type="fixed">
+    <parent link="base_link"/>
+    <child link="platform"/>
+  </joint>
+
+
+</robot>
