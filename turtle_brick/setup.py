@@ -20,6 +20,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
+            'turtle_bot_node = turtle_brick.turtle_bot_node:main'
         ],
     },
 )
