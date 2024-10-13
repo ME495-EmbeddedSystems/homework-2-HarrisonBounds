@@ -10,9 +10,10 @@ from nav_msgs.msg import Odometry
 from turtlesim.msg import Pose
 
 
+
 class Turtle_Robot_Node(Node):
     def __init__(self):
-        super().init('turtle_bot_node')
+        super().__init__('turtle_bot_node')
         cb_group = MutuallyExclusiveCallbackGroup()
         
         self.frequency = 100
@@ -30,18 +31,46 @@ class Turtle_Robot_Node(Node):
         self.broadcaster = TransformBroadcaster(self)
         
         self.joint_state_pub = self.create_publisher(JointState, '/joint_states', 10, callback_group=cb_group)
+        self.joint_names = ['wheel_to_base', 'base_to_platform']
+        self.joint_positions = [0.0, 0.0]
+        self.joint_velocities = [0.0, 0.0]
+        self.wheel_radius = 0.04 #Change so that this is dynamic!
+        self.forward_velocity = 1.0
+        self.caster_wheel_angle = 0.0
+        self.old_time = self.get_clock().now().nanoseconds
+        self.old_time = self.old_time / 1e9 #Transform nanoseconds to seconds
+        
         self.odom_pub = self.create_publisher(Odometry, '/odom', 10, callback_group=cb_group)
         self.cmd_vel_pub = self.create_publisher(Twist, '/turtlesim1/turtle1/cmd_vel', 10, callback_group=cb_group)
         
         self.goal_sub = self.create_subscription(PoseStamped, 'goal_pose', self.goal_callback, 10, callback_group=cb_group)
         #Create tilt subscriber??
-        self.pose_subscription = self.create_subscription(Pose, '/turtlesim1/turtle1/pose', self.sub_callback, 10, callback_group=cb_group)
+        self.pose_subscription = self.create_subscription(Pose, '/turtlesim1/turtle1/pose', self.pose_callback, 10, callback_group=cb_group)
         
         self._tmr = self.create_timer(self.interval, self.timer_callback)
         
         
     def timer_callback(self):
         #Calculate and publish the joint states
+        current_time = self.get_clock().now().nanoseconds 
+        current_time = current_time / 1e9 
+        dt = current_time - self.old_time
+        self.old_time = current_time
+        
+        angular_velocity = self.forward_velocity / self.wheel_radius
+        
+        self.joint_positions[0] = angular_velocity * dt
+        self.joint_positions[1] = 0.0
+        
+        self.joint_velocities[0] = angular_velocity
+        self.joint_velocities[1] = 0.0
+        
+    
+        joint_state_msg = JointState()
+        joint_state_msg.header.stamp = self.get_clock().now().to_msg()
+        joint_state_msg.name = self.joint_names
+        joint_state_msg.position = self.joint_positions
+        joint_state_msg.velocity = self.joint_velocities
         
         #Broadcast base_link frame relative to odom frame
         
@@ -53,6 +82,9 @@ class Turtle_Robot_Node(Node):
         pass
     
     def goal_callback(self):
+        pass
+    
+    def pose_callback(self):
         pass
     
 def main(args=None):
