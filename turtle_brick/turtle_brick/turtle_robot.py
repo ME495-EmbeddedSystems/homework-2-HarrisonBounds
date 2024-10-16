@@ -19,14 +19,15 @@ class Turtle_Robot_Node(Node):
         self.frequency = 100
         self.interval = 1 / self.frequency
         
+        #Create the world and odometry frame: Both Static
         self.static_broadcaster = StaticTransformBroadcaster(self)
         
-        world_base_tf = TransformStamped()
-        world_base_tf.header.stamp = self.get_clock().now().to_msg()
-        world_base_tf.header.frame_id = 'world'
-        world_base_tf.child_frame_id = 'base'
+        world_odom_tf = TransformStamped()
+        world_odom_tf.header.stamp = self.get_clock().now().to_msg()
+        world_odom_tf.header.frame_id = 'world'
+        world_odom_tf.child_frame_id = 'odom'
         
-        self.static_broadcaster.sendTransform(world_base_tf)
+        self.static_broadcaster.sendTransform(world_odom_tf)
         
         self.broadcaster = TransformBroadcaster(self)
         
@@ -73,6 +74,22 @@ class Turtle_Robot_Node(Node):
         joint_state_msg.velocity = self.joint_velocities
         
         #Broadcast base_link frame relative to odom frame
+        odom_base_link = TransformStamped()
+        odom_base_link.header.frame_id = 'odom'
+        odom_base_link.child_frame_id = 'base_link'
+        odom_base_link.transform.translation.x = self.joint_positions[0]
+        
+        self.broadcaster.sendTransform(odom_base_link)
+        
+        base_link_wheel = TransformStamped()
+        base_link_wheel.header.frame_id = 'base_link'
+        base_link_wheel.child_frame_id = 'wheel'
+        base_link_wheel.transform.translation.x = self.joint_positions[0]
+        
+        self.broadcaster.sendTransform(odom_base_link)
+        
+        
+        
         
         #Publish Odometry message
         

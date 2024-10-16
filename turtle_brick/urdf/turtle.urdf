@@ -2,7 +2,7 @@
 <robot name="turtle_bot">
   <link name="base_link">
     <visual>
-      <origin xyz="0 0 0.3" rpy="0 0 0"/> <!-- Centered box half above the origin -->
+      <origin xyz="0 0 0.5" rpy="0 0 0"/> 
       <geometry>
         <box size="0.5 0.5 0.5"/>
       </geometry>
@@ -14,7 +14,7 @@
 
   <link name="platform">
     <visual>
-      <origin xyz="0 0 1" rpy="0 0 0"/>
+      <origin xyz="0 0 1.5" rpy="0 0 0"/>
       <geometry>
         <cylinder length="0.1" radius="0.7"/>
       </geometry>
@@ -27,9 +27,9 @@
 
   <link name="pole">
     <visual>
-      <origin xyz="0 0 0.7" rpy="0 0 0"/>
+      <origin xyz="0 0 0.85" rpy="0 0 0"/>
       <geometry>
-        <cylinder length="0.6" radius="0.05"/>
+        <cylinder length="1.4" radius="0.03"/>
       </geometry>
       <material name="Blue">
         <color rgba="0 0 1 1"/>
@@ -39,12 +39,12 @@
 
   <link name="wheel">
     <visual>
-      <origin xyz="0 0 0.01" rpy="0 0 0"/>
+      <origin xyz="0 0 0.08" rpy="0 0 0"/>
         <geometry>
-          <sphere radius="0.04"/>
+          <sphere radius="0.09"/>
         </geometry>
           <material name="Black">
-            <color rgba="1 1 1 1"/>
+            <color rgba="1.0 1.0 0.0 1.0"/>
           </material>
     </visual>
   </link>
@@ -64,6 +64,7 @@
 
 
   <joint name="wheel_to_base" type="floating">
+      <origin xyz="0 0 0.2" rpy="0 0 0"/>
       <parent link="base_link"/>
       <child link="wheel"/>
   </joint>
