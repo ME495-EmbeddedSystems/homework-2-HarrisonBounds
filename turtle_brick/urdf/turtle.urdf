@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
 <robot name="turtle_bot">
+
   <link name="base_link">
     <visual>
       <origin xyz="0 0 0.5" rpy="0 0 0"/> 
@@ -27,9 +28,9 @@
 
   <link name="pole">
     <visual>
-      <origin xyz="0 0 0.85" rpy="0 0 0"/>
+      <origin xyz="0 0 1" rpy="0 0 0"/>
       <geometry>
-        <cylinder length="1.4" radius="0.03"/>
+        <cylinder length="1.1" radius="0.03"/>
       </geometry>
       <material name="Blue">
         <color rgba="0 0 1 1"/>
@@ -39,34 +40,51 @@
 
   <link name="wheel">
     <visual>
-      <origin xyz="0 0 0.08" rpy="0 0 0"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry>
           <sphere radius="0.09"/>
         </geometry>
-          <material name="Black">
+          <material name="Yellow">
             <color rgba="1.0 1.0 0.0 1.0"/>
           </material>
     </visual>
   </link>
 
+  <link name="stem">
+    <visual>
+      <origin xyz="0 0 0.3" rpy="0 0 0"/>
+      <geometry>
+        <cylinder length="0.5" radius="0.02"/>
+      </geometry>
+      <material name="Green">
+        <color rgba="0 1 0 1"/>
+      </material>
+    </visual>
+  </link>
+
+  <joint name="base_to_stem" type="continuous">
+    <axis xyz="0 0 1" />
+      <parent link="base_link"/>
+      <child link="stem"/>
+  </joint>
+
+  <joint name="stem_to_wheel" type="continuous">
+    <axis xyz="1 0 0" />
+      <parent link="stem"/>
+      <child link="wheel"/>
+  </joint>
 
   <joint name="base_to_pole" type="fixed">
-    <axis xyz="0 0 1" />
       <parent link="base_link"/>
       <child link="pole"/>
   </joint>
 
-  <joint name="base_to_platform" type="continuous">
-    <axis xyz="0 0 1" />
+  <joint name="pole_to_platform" type="continuous">
+    <axis xyz="1 0 0" />
       <parent link="pole"/>
       <child link="platform"/>
   </joint>
 
 
-  <joint name="wheel_to_base" type="floating">
-      <origin xyz="0 0 0.2" rpy="0 0 0"/>
-      <parent link="base_link"/>
-      <child link="wheel"/>
-  </joint>
 
 </robot>
