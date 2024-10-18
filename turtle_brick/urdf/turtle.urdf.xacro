@@ -1,5 +1,8 @@
 <?xml version="1.0"?>
-<robot name="turtle_bot">
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+<xacro:property name="yaml_file" value="$(find package)/turtle.yaml" />
+<xacro:property name="props" value="${xacro.load_yaml(yaml_file)['/**']['ros__parameters']}" />
+<xacro:property name="myprop"  value="${props['platform_height']}" />
 
   <link name="base_link">
     <visual>
@@ -15,7 +18,7 @@
 
   <link name="platform">
     <visual>
-      <origin xyz="0 0 1.5" rpy="0 0 0"/>
+      <origin xyz="0 0 ${myprop}" rpy="0 0 0"/>
       <geometry>
         <cylinder length="0.1" radius="0.7"/>
       </geometry>
