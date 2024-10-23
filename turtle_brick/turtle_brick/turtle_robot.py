@@ -9,6 +9,7 @@ from geometry_msgs.msg import TransformStamped, Twist, PoseStamped, Vector3
 from nav_msgs.msg import Odometry
 from turtlesim.msg import Pose
 import math
+import numpy as np
 
 
 
@@ -20,59 +21,58 @@ class Turtle_Robot_Node(Node):
         self.frequency = 100
         self.interval = 1 / self.frequency
         
-        #Create the odometry static frame
-        self.static_broadcaster = StaticTransformBroadcaster(self)
-        
-        world_odom_tf = TransformStamped()
-        world_odom_tf.header.stamp = self.get_clock().now().to_msg()
-        world_odom_tf.header.frame_id = 'world'
-        world_odom_tf.child_frame_id = 'odom'
-        self.static_broadcaster.sendTransform(world_odom_tf)
-        
-        self.broadcaster = TransformBroadcaster(self)
-        
-        self.joint_state_pub = self.create_publisher(JointState, '/joint_states', 10, callback_group=cb_group)
-        self.joint_names = ['wheel_to_base', 'base_to_platform', 'base_to_stem', 'stem_to_wheel']
-        self.joint_positions = [0.0, 0.0, 0.0, 0.0]
-        self.joint_velocities = [0.0, 0.0, 0.0, 0.0]
+        self.joint_state_pub = self.create_publisher(JointState, '/joint_states', 10)
+        self.joint_names = ['base_to_stem', 'stem_to_wheel', 'pole_to_platform']
+        self.joint_positions = [0.0, 0.0, 0.0]
+        self.joint_velocities = [0.0, 0.0, 0.0]
+        self.joint_efforts = [0.0, 0.0, 0.0]
         self.wheel_radius = 0.04 #Change so that this is dynamic!
         self.forward_velocity = 1.0
         self.caster_wheel_angle = 0.0
         self.old_time = self.get_clock().now().nanoseconds
         self.old_time = self.old_time / 1e9 #Transform nanoseconds to seconds
         
-        self.odom_pub = self.create_publisher(Odometry, '/odom', 10, callback_group=cb_group)
-        self.cmd_vel_pub = self.create_publisher(Twist, '/turtlesim1/turtle1/cmd_vel', 10, callback_group=cb_group)
+        self.odom_pub = self.create_publisher(Odometry, '/odom', 10)
+        self.cmd_vel_pub = self.create_publisher(Twist, '/turtlesim1/turtle1/cmd_vel', 10)
         
-        self.goal_sub = self.create_subscription(PoseStamped, 'goal_pose', self.goal_callback, 10, callback_group=cb_group)
+        self.goal_sub = self.create_subscription(PoseStamped, '/goal_pose', self.goal_callback, 10)
         #Create tilt subscriber??
-        self.pose_subscription = self.create_subscription(Pose, '/turtlesim1/turtle1/pose', self.pose_callback, 10, callback_group=cb_group)
+        self.pose_subscription = self.create_subscription(Pose, '/turtlesim1/turtle1/pose', self.pose_callback, 10)
         self.delta_x = 0.0
         self.delta_y = 0.0
         self.delta_theta = 0.0
+        self.pose = 0.0
         
         self._tmr = self.create_timer(self.interval, self.timer_callback)
+        
+        #Create the odometry static frame
+        self.odomX = 5.5
+        self.odomY = 5.5
+        self.static_broadcaster = StaticTransformBroadcaster(self)
+        
+        self.world_odom_tf = TransformStamped()
+        self.world_odom_tf.header.stamp = self.get_clock().now().to_msg()
+        self.world_odom_tf.header.frame_id = 'world'
+        self.world_odom_tf.child_frame_id = 'odom'
+        self.world_odom_tf.transform.translation.x = self.odomX
+        self.world_odom_tf.transform.translation.y = self.odomY
+        self.world_odom_tf.transform.translation.z = 0.0
+        q = quaternion_from_euler(0, 0, 0)
+        self.world_odom_tf.transform.rotation.x = q[0]
+        self.world_odom_tf.transform.rotation.y = q[1]
+        self.world_odom_tf.transform.rotation.z = q[2]
+        self.world_odom_tf.transform.rotation.w = q[3]
+        
+
+        self.static_broadcaster.sendTransform(self.world_odom_tf)
+        
+        self.broadcaster = TransformBroadcaster(self)
         
         
     def timer_callback(self):
         #Calculate and publish the joint states
-        current_time = self.get_clock().now().nanoseconds 
-        current_time = current_time / 1e9 
-        dt = current_time - self.old_time
-        self.old_time = current_time
         
-        angular_velocity = self.forward_velocity / self.wheel_radius
-        
-        self.joint_positions[0] = 0.0
-        self.joint_positions[1] = 0.0
-        self.joint_positions[2] = 0.0
-        self.joint_positions[3] = angular_velocity * dt
-     
-        self.joint_velocities[0] = 0.0
-        self.joint_velocities[1] = 0.0
-        self.joint_velocities[2] = 0.0
-        self.joint_velocities[3] = angular_velocity
-        
+        angular_velocity = 0.5
 
         #Publish wheel joint state
         joint_state_msg = JointState()
@@ -80,43 +80,13 @@ class Turtle_Robot_Node(Node):
         joint_state_msg.name = self.joint_names
         joint_state_msg.position = self.joint_positions
         joint_state_msg.velocity = self.joint_velocities
+        joint_state_msg.effort = self.joint_efforts
         self.joint_state_pub.publish(joint_state_msg)
         
-        #Broadcast base_link frame relative to odom frame
-        odom_base_link = TransformStamped()
-        odom_base_link.header.frame_id = 'odom'
-        odom_base_link.child_frame_id = 'base_link'
-        odom_base_link.transform.translation.x = self.delta_x
-        odom_base_link.transform.translation.y = self.delta_y
-        odom_base_link.transform.translation.z = 0.0
         
-        odom_base_link.transform.rotation.x = 0.0
-        odom_base_link.transform.rotation.y = 0.0
-        odom_base_link.transform.rotation.z = self.delta_theta
-        odom_base_link.transform.rotation.w = math.cos(self.delta_theta / 2.0)
+        cmd_vel_msg = self.move_turtle(self.forward_velocity, angular_velocity)
+        self.cmd_vel_pub.publish(cmd_vel_msg)
 
-        self.broadcaster.sendTransform(odom_base_link)
-        
-        #Use Quaternion
-        odom = Odometry()
-        odom.header.stamp = self.get_clock().now().to_msg()
-        odom.header.frame_id = 'odom'
-        odom.child_frame_id = 'base_link'
-        odom.pose.pose.position.x = self.delta_x
-        odom.pose.pose.position.y = self.delta_y
-        odom.pose.pose.position.z = self.delta_z
-        odom.pose.pose.orientation = odom_base_link.transform.rotation
-        self.odom_pub.publish(odom)
-        
-        #Publish Twist
-        twist = self.move_turtle(self.forward_velocity, 0.5)
-        self.cmd_vel_pub.publish(twist)
-        
-
-        #Publish Odometry message
-        
-        #Publish cmd_vel
-        
         
     def move_turtle(self, xdot, omega):
         """ Create a twist suitable for a turtle
@@ -141,6 +111,60 @@ class Turtle_Robot_Node(Node):
         self.delta_y = msg.y
         self.delta_theta = msg.theta
         
+        #Broadcast base_link frame relative to odom frame
+        odom_base_link = TransformStamped()
+        odom_base_link.header.frame_id = 'odom'
+        odom_base_link.child_frame_id = 'base_link'
+        odom_base_link.transform.translation.x = msg.x - self.odomX
+        odom_base_link.transform.translation.y = msg.y - self.odomY
+        odom_base_link.transform.translation.z = 0.0
+        
+        q = quaternion_from_euler(0, 0, msg.theta)
+        
+        odom_base_link.transform.rotation.x = q[0]
+        odom_base_link.transform.rotation.y = q[1]
+        odom_base_link.transform.rotation.z = q[2]
+        odom_base_link.transform.rotation.w = q[3]
+
+        self.broadcaster.sendTransform(odom_base_link)
+        
+        # # Publish Odometry message
+        # odom_msg = Odometry()
+        # odom_msg.header.stamp = self.get_clock().now().to_msg()
+        # odom_msg.header.frame_id = 'odom'
+        # odom_msg.child_frame_id = 'base_link'
+        # odom_msg.pose.pose.position.x = self.delta_x
+        # odom_msg.pose.pose.position.y = self.delta_y
+        # odom_msg.pose.pose.orientation.x = q[0]
+        # odom_msg.pose.pose.orientation.y = q[1]
+        # odom_msg.pose.pose.orientation.z = q[2]
+        # odom_msg.pose.pose.orientation.w = q[3]
+        
+        # self.odom_pub.publish(odom_msg)
+
+        
+def quaternion_from_euler(ai, aj, ak):
+    ai /= 2.0
+    aj /= 2.0
+    ak /= 2.0
+    ci = math.cos(ai)
+    si = math.sin(ai)
+    cj = math.cos(aj)
+    sj = math.sin(aj)
+    ck = math.cos(ak)
+    sk = math.sin(ak)
+    cc = ci*ck
+    cs = ci*sk
+    sc = si*ck
+    ss = si*sk
+
+    q = np.empty((4, ))
+    q[0] = cj*sc - sj*cs
+    q[1] = cj*ss + sj*cc
+    q[2] = cj*cs - sj*sc
+    q[3] = cj*cc + sj*ss
+
+    return q      
     
 def main(args=None):
     """Entrypoint for the mynode ROS node."""

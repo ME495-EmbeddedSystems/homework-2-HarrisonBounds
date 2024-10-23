@@ -1,8 +1,12 @@
 <?xml version="1.0"?>
-<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
-<xacro:property name="yaml_file" value="$(find package)/turtle.yaml" />
+<robot name="turtle_bot" xmlns:xacro="http://www.ros.org/wiki/xacro">
+<!-- Get the path to the yaml file relative to the package -->
+<!-- config.yaml should have been installed in setup.py -->
+<xacro:property name="yaml_file" value="$(find turtle_brick)/turtle.yaml" />
+<!-- load values from yaml file which are stored in a dictionary called props-->
 <xacro:property name="props" value="${xacro.load_yaml(yaml_file)['/**']['ros__parameters']}" />
-<xacro:property name="myprop"  value="${props['platform_height']}" />
+<!-- access an individual variable -->
+<xacro:property name="platform_height"  value="${props['platform_height']}" />
 
   <link name="base_link">
     <visual>
@@ -18,9 +22,9 @@
 
   <link name="platform">
     <visual>
-      <origin xyz="0 0 ${myprop}" rpy="0 0 0"/>
+      <origin xyz="0 0 2" rpy="0 0 0"/>
       <geometry>
-        <cylinder length="0.1" radius="0.7"/>
+        <cylinder length="0.2" radius="0.7"/>
       </geometry>
       <material name="Red">
         <color rgba="1 0 0 1"/>
@@ -33,7 +37,7 @@
     <visual>
       <origin xyz="0 0 1" rpy="0 0 0"/>
       <geometry>
-        <cylinder length="1.1" radius="0.03"/>
+        <cylinder length="${platform_height}" radius="0.03"/>
       </geometry>
       <material name="Blue">
         <color rgba="0 0 1 1"/>
@@ -67,27 +71,29 @@
 
   <joint name="base_to_stem" type="continuous">
     <axis xyz="0 0 1" />
-      <parent link="base_link"/>
-      <child link="stem"/>
+    <origin xyz="0 0 0"/>
+    <parent link="base_link"/>
+    <child link="stem"/>
   </joint>
 
   <joint name="stem_to_wheel" type="continuous">
     <axis xyz="1 0 0" />
-      <parent link="stem"/>
-      <child link="wheel"/>
+    <origin xyz="0 0 0"/>
+    <parent link="stem"/>
+    <child link="wheel"/>
   </joint>
 
   <joint name="base_to_pole" type="fixed">
-      <parent link="base_link"/>
-      <child link="pole"/>
+    <origin xyz="0 0 0" />
+    <parent link="base_link"/>
+    <child link="pole"/>
   </joint>
 
   <joint name="pole_to_platform" type="continuous">
     <axis xyz="1 0 0" />
-      <parent link="pole"/>
-      <child link="platform"/>
+    <origin xyz="0 0 0"/>
+    <parent link="pole"/>
+    <child link="platform"/>
   </joint>
-
-
-
+  
 </robot>

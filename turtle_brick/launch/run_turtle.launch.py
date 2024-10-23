@@ -11,7 +11,7 @@ def generate_launch_description():
         namespace='turtlesim1',
         executable='turtlesim_node',
         name='sim',
-        parameters=[{'holonomic': True}]
+        parameters=[{'holonomic': False}]
         ),
     
     Node(
@@ -20,7 +20,6 @@ def generate_launch_description():
         executable='turtle_bot_node',
         name='turtle_bot_node',
     ),
-    
     
         # Include another launch file
         IncludeLaunchDescription(
