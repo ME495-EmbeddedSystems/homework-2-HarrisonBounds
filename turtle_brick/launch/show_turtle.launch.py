@@ -12,12 +12,12 @@ def generate_launch_description():
                 {"robot_description" :
                 Command([ExecutableInPackage("xacro", "xacro"), " ",
                         PathJoinSubstitution(
-                        [FindPackageShare("turtle_brick"), "turtle.urdf"])])}
+                        [FindPackageShare("turtle_brick"), "turtle.urdf.xacro"])])}
                         ]
             ),
         Node(
-                package="joint_state_publisher",
-                executable="joint_state_publisher"
+                package="joint_state_publisher_gui",
+                executable="joint_state_publisher_gui"
             ),
         Node(
             package="rviz2",

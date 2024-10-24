@@ -7,6 +7,10 @@
 <xacro:property name="props" value="${xacro.load_yaml(yaml_file)['/**']['ros__parameters']}" />
 <!-- access an individual variable -->
 <xacro:property name="platform_height"  value="${props['platform_height']}" />
+<xacro:property name="wheel_radius"  value="${props['wheel_radius']}" />
+<!-- <xacro:property name="max_velocity"  value="${props['max_velocity']}" />
+<xacro:property name="gravity_accel"  value="${props['gravity_accel']}" /> -->
+
 
   <link name="base_link">
     <visual>
@@ -22,7 +26,7 @@
 
   <link name="platform">
     <visual>
-      <origin xyz="0 0 2" rpy="0 0 0"/>
+      <origin xyz="0 0 ${platform_height}" rpy="0 0 0"/>
       <geometry>
         <cylinder length="0.2" radius="0.7"/>
       </geometry>
@@ -49,7 +53,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry>
-          <sphere radius="0.09"/>
+          <sphere radius="${wheel_radius}"/>
         </geometry>
           <material name="Yellow">
             <color rgba="1.0 1.0 0.0 1.0"/>
@@ -69,31 +73,31 @@
     </visual>
   </link>
 
-  <joint name="base_to_stem" type="continuous">
+  <joint name="j1" type="continuous">
     <axis xyz="0 0 1" />
     <origin xyz="0 0 0"/>
     <parent link="base_link"/>
     <child link="stem"/>
   </joint>
 
-  <joint name="stem_to_wheel" type="continuous">
+  <joint name="j2" type="continuous">
     <axis xyz="1 0 0" />
     <origin xyz="0 0 0"/>
     <parent link="stem"/>
     <child link="wheel"/>
   </joint>
 
-  <joint name="base_to_pole" type="fixed">
-    <origin xyz="0 0 0" />
-    <parent link="base_link"/>
-    <child link="pole"/>
-  </joint>
-
-  <joint name="pole_to_platform" type="continuous">
+  <joint name="j3" type="continuous">
     <axis xyz="1 0 0" />
     <origin xyz="0 0 0"/>
     <parent link="pole"/>
     <child link="platform"/>
+  </joint>
+
+  <joint name="base_to_pole" type="fixed">
+    <origin xyz="0 0 0" />
+    <parent link="base_link"/>
+    <child link="pole"/>
   </joint>
   
 </robot>

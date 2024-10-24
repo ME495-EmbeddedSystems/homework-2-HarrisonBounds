@@ -12,7 +12,7 @@
 
   <!-- The joint state publisher will be launched with a gui, read the urdf from /robot_description
        and publish the joint values on /joint_states -->
-  <node pkg="turtle_brick" exec="turtle_bot"/>
+  <node pkg="joint_state_publisher_gui" exec="joint_state_publisher_gui"/>
 
   <!-- rviz will enable us to see the robot -->
   <node pkg="rviz2" exec="rviz2" args="-d $(find-pkg-share turtle_brick)/view_robot.rviz"/>

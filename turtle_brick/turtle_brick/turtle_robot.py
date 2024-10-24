@@ -16,16 +16,11 @@ import numpy as np
 class Turtle_Robot_Node(Node):
     def __init__(self):
         super().__init__('turtle_bot_node')
-        cb_group = MutuallyExclusiveCallbackGroup()
         
         self.frequency = 100
         self.interval = 1 / self.frequency
         
         self.joint_state_pub = self.create_publisher(JointState, '/joint_states', 10)
-        self.joint_names = ['base_to_stem', 'stem_to_wheel', 'pole_to_platform']
-        self.joint_positions = [0.0, 0.0, 0.0]
-        self.joint_velocities = [0.0, 0.0, 0.0]
-        self.joint_efforts = [0.0, 0.0, 0.0]
         self.wheel_radius = 0.04 #Change so that this is dynamic!
         self.forward_velocity = 1.0
         self.caster_wheel_angle = 0.0
@@ -46,14 +41,14 @@ class Turtle_Robot_Node(Node):
         self._tmr = self.create_timer(self.interval, self.timer_callback)
         
         #Create the odometry static frame
-        self.odomX = 5.5
-        self.odomY = 5.5
+        self.odomX = 5.54
+        self.odomY = 5.54
         self.static_broadcaster = StaticTransformBroadcaster(self)
         
         self.world_odom_tf = TransformStamped()
         self.world_odom_tf.header.stamp = self.get_clock().now().to_msg()
-        self.world_odom_tf.header.frame_id = 'world'
-        self.world_odom_tf.child_frame_id = 'odom'
+        self.world_odom_tf.header.frame_id = "world"
+        self.world_odom_tf.child_frame_id = "odom"
         self.world_odom_tf.transform.translation.x = self.odomX
         self.world_odom_tf.transform.translation.y = self.odomY
         self.world_odom_tf.transform.translation.z = 0.0
@@ -72,20 +67,39 @@ class Turtle_Robot_Node(Node):
     def timer_callback(self):
         #Calculate and publish the joint states
         
-        angular_velocity = 0.5
-
+        angular_velocity = 1.0
+        
         #Publish wheel joint state
         joint_state_msg = JointState()
         joint_state_msg.header.stamp = self.get_clock().now().to_msg()
-        joint_state_msg.name = self.joint_names
-        joint_state_msg.position = self.joint_positions
-        joint_state_msg.velocity = self.joint_velocities
-        joint_state_msg.effort = self.joint_efforts
+        joint_state_msg.header.frame_id = "odom"
+        joint_state_msg.name = ["j1", "j2", "j3"]
+        joint_state_msg.position = [0.0, 0.0, 0.0]
+
         self.joint_state_pub.publish(joint_state_msg)
+       
+        
+        odom_base_link = TransformStamped()
+        odom_base_link.header.frame_id = 'odom'
+        odom_base_link.child_frame_id = 'base_link'
+        odom_base_link.transform.translation.x = self.delta_x - self.odomX
+        odom_base_link.transform.translation.y = self.delta_y - self.odomY
+        odom_base_link.transform.translation.z = 0.0
+        
+        q = quaternion_from_euler(0, 0, self.delta_theta)
+        
+        odom_base_link.transform.rotation.x = q[0]
+        odom_base_link.transform.rotation.y = q[1]
+        odom_base_link.transform.rotation.z = q[2]
+        odom_base_link.transform.rotation.w = q[3]
+
+        self.broadcaster.sendTransform(odom_base_link)
         
         
         cmd_vel_msg = self.move_turtle(self.forward_velocity, angular_velocity)
         self.cmd_vel_pub.publish(cmd_vel_msg)
+        
+
 
         
     def move_turtle(self, xdot, omega):
@@ -112,21 +126,7 @@ class Turtle_Robot_Node(Node):
         self.delta_theta = msg.theta
         
         #Broadcast base_link frame relative to odom frame
-        odom_base_link = TransformStamped()
-        odom_base_link.header.frame_id = 'odom'
-        odom_base_link.child_frame_id = 'base_link'
-        odom_base_link.transform.translation.x = msg.x - self.odomX
-        odom_base_link.transform.translation.y = msg.y - self.odomY
-        odom_base_link.transform.translation.z = 0.0
-        
-        q = quaternion_from_euler(0, 0, msg.theta)
-        
-        odom_base_link.transform.rotation.x = q[0]
-        odom_base_link.transform.rotation.y = q[1]
-        odom_base_link.transform.rotation.z = q[2]
-        odom_base_link.transform.rotation.w = q[3]
-
-        self.broadcaster.sendTransform(odom_base_link)
+       
         
         # # Publish Odometry message
         # odom_msg = Odometry()
