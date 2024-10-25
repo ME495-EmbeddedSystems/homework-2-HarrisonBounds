@@ -30,7 +30,8 @@ setup(
         'console_scripts': [
             #Name = <pkg_name>.<module_name>:<function_to_run>
             #Use this name for your executable in your launch file!!
-            'turtle_bot_node = turtle_brick.turtle_robot:main'
+            'turtle_bot_node = turtle_brick.turtle_robot:main',
+            'arena_node = turtle_brick.arena:main'
         ],
     },
 )

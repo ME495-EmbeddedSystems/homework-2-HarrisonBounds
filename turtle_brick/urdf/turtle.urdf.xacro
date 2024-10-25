@@ -10,6 +10,7 @@
 <xacro:property name="wheel_radius"  value="${props['wheel_radius']}" />
 <!-- <xacro:property name="max_velocity"  value="${props['max_velocity']}" />
 <xacro:property name="gravity_accel"  value="${props['gravity_accel']}" /> -->
+<!-- <xacro:property name="base_link_origin"  value="${}" /> -->
 
 
   <link name="base_link">
@@ -73,21 +74,21 @@
     </visual>
   </link>
 
-  <joint name="j1" type="continuous">
+  <joint name="j1" type="fixed">
     <axis xyz="0 0 1" />
     <origin xyz="0 0 0"/>
     <parent link="base_link"/>
     <child link="stem"/>
   </joint>
 
-  <joint name="j2" type="continuous">
+  <joint name="j2" type="fixed">
     <axis xyz="1 0 0" />
     <origin xyz="0 0 0"/>
     <parent link="stem"/>
     <child link="wheel"/>
   </joint>
 
-  <joint name="j3" type="continuous">
+  <joint name="j3" type="fixed">
     <axis xyz="1 0 0" />
     <origin xyz="0 0 0"/>
     <parent link="pole"/>
