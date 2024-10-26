@@ -64,6 +64,7 @@ class Turtle_Robot_Node(Node):
         
         self.goal_x = None
         self.goal_y = None
+        self.distance_to_goal = 0.0
         
 
         self.static_broadcaster.sendTransform(self.world_odom_tf)
@@ -97,11 +98,11 @@ class Turtle_Robot_Node(Node):
         self.broadcaster.sendTransform(odom_base_link)
         
         
-        #Publish cmd_vel msg if the 
+        #Publish cmd_vel msg if the robot hasnt reached the goal
         if self.goal_x != None and self.goal_y != None and self.goal_x != self.delta_x and self.goal_y != self.delta_y:
             self.angle = math.atan2(self.goal_y - self.delta_y, self.goal_x - self.delta_x)
-            distance_to_goal = math.sqrt((self.goal_y - self.delta_y)**2 + (self.goal_x - self.delta_x)**2)
-            move = self.forward_velocity * distance_to_goal
+            self.distance_to_goal = math.sqrt((self.goal_y - self.delta_y)**2 + (self.goal_x - self.delta_x)**2)
+            move = self.forward_velocity * self.distance_to_goal
             
             if self.angle > np.pi:
                 self.angle = self.angle - 2*np.pi
