@@ -11,7 +11,6 @@ setup(
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml', 
                                    'urdf/turtle.urdf.xacro', 
-                                   'urdf/slidebot.urdf', 
                                    'launch/show_turtle.launch.py',
                                    'config/view_robot.rviz',
                                    'launch/run_turtle.launch.py',
@@ -31,7 +30,8 @@ setup(
             #Name = <pkg_name>.<module_name>:<function_to_run>
             #Use this name for your executable in your launch file!!
             'turtle_bot_node = turtle_brick.turtle_robot:main',
-            'arena_node = turtle_brick.arena:main'
+            'arena_node = turtle_brick.arena:main',
+            'catcher_node = turtle_brick.catcher:main'
         ],
     },
 )

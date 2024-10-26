@@ -23,6 +23,8 @@ class Arena_Node(Node):
     
         self.marker_array_pub = self.create_publisher(MarkerArray, '/visualization_marker_array', qos)
         self.brick_pub = self.create_publisher(Marker, "/visualization_marker", qos)
+        self.brick_location_pub = self.create_publisher(Point, "/brick_location_topic", qos)
+        self.location = None
         
         self.m1 = None
         self.m2 = None
@@ -77,8 +79,14 @@ class Arena_Node(Node):
             
             self.brick_pub.publish(self.brick_marker)
             
+            
             if self.drop_state:
-                #Updates brick location - now get that to set transform and marker
+                self.location = Point()
+                self.location.x = self.world.brick[0]
+                self.location.y = self.world.brick[1]
+                self.location.z = self.world.brick[2]
+                self.brick_location_pub.publish(self.location)
+
                 self.world.drop()
             
             

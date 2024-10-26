@@ -26,6 +26,13 @@ def generate_launch_description():
         executable='arena_node',
         name='arena_node',
     ),
+    Node(
+        package='turtle_brick',
+        namespace='catcher',
+        executable='catcher_node',
+        name='catcher_node',
+    ),
+    
     
         # Include another launch file
         IncludeLaunchDescription(
