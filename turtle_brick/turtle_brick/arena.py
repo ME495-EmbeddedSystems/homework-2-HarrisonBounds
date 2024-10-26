@@ -8,6 +8,8 @@ from visualization_msgs.msg import Marker, MarkerArray
 from tf2_ros import TransformBroadcaster
 from geometry_msgs.msg import TransformStamped, Point
 from turtle_brick_interfaces.srv import Place
+from turtle_brick.physics import World
+from std_msgs.msg import Empty
 
 
 class Arena_Node(Node):
@@ -30,8 +32,17 @@ class Arena_Node(Node):
         self.broadcaster = TransformBroadcaster(self, qos)
         
         self.place_brick_service = self.create_service(Place, 'place_brick', self.place_brick)
+        self.drop_brick_service = self.create_service(Empty, 'drop_brick', self.drop_brick)
         
         self.brick_location = None
+        
+        #Set the physics
+        self.brick_location = (0.0, 0.0, 0.0)
+        self.gravity = 9.8
+        self.brick_radius = 0.25
+        self.dt = 1/250
+        
+        self.world = World(self.brick_location, self.gravity, self.brick_radius, self.dt)
     
         
     def timer_callback(self):
@@ -67,6 +78,14 @@ class Arena_Node(Node):
         self.brick.color.a = 1.0
         
         self.brick_pub.publish(self.brick)
+        
+        #Set the brick location 
+        self.world.brick = (request.brick_location.x, request.brick_location.y, request.brick_location.z)
+        
+        return response
+    
+    def drop_brick(self, request, response):
+        self.world.drop()
         
         return response
         
