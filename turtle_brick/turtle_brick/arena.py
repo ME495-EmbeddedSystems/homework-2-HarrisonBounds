@@ -9,7 +9,7 @@ from tf2_ros import TransformBroadcaster
 from geometry_msgs.msg import TransformStamped, Point
 from turtle_brick_interfaces.srv import Place
 from turtle_brick.physics import World
-from std_msgs.msg import Empty
+from std_srvs.srv import Empty
 
 
 class Arena_Node(Node):
@@ -40,52 +40,56 @@ class Arena_Node(Node):
         self.brick_location = (0.0, 0.0, 0.0)
         self.gravity = 9.8
         self.brick_radius = 0.25
-        self.dt = 1/250
         
-        self.world = World(self.brick_location, self.gravity, self.brick_radius, self.dt)
+        self.world = World(self.brick_location, self.gravity, self.brick_radius, self.interval)
+        self.drop_state = False
+        self.place_state = False
     
         
     def timer_callback(self):
         self.place_walls()
         
-        
-        
+        if self.place_state:
+            world_brick_tf = TransformStamped()
+            world_brick_tf.header.frame_id = 'world'
+            world_brick_tf.child_frame_id = 'brick'
+            world_brick_tf.transform.translation.x = self.world.brick[0]
+            world_brick_tf.transform.translation.y = self.world.brick[1]
+            world_brick_tf.transform.translation.z = self.world.brick[2]
+            self.broadcaster.sendTransform(world_brick_tf)
+            
+            self.brick_marker = Marker()
+            self.brick_marker.header.frame_id = 'world'
+            self.brick_marker.header.stamp = self.get_clock().now().to_msg()
+            self.brick_marker.id = 5
+            self.brick_marker.type = Marker.CUBE
+            self.brick_marker.action = Marker.ADD
+            self.brick_marker.scale.x = 0.5
+            self.brick_marker.scale.y = 0.5
+            self.brick_marker.scale.z = 0.5
+            self.brick_marker.pose.position.x = self.world.brick[0]
+            self.brick_marker.pose.position.y = self.world.brick[1]
+            self.brick_marker.pose.position.z = self.world.brick[2]
+            self.brick_marker.color.r = 0.0
+            self.brick_marker.color.g = 1.0
+            self.brick_marker.color.b = 1.0
+            self.brick_marker.color.a = 1.0
+            
+            self.brick_pub.publish(self.brick_marker)
+            
+            if self.drop_state:
+                #Updates brick location - now get that to set transform and marker
+                self.world.drop()
+            
+            
     def place_brick(self, request, response):
-        
-        world_brick_tf = TransformStamped()
-        world_brick_tf.header.frame_id = 'world'
-        world_brick_tf.child_frame_id = 'brick'
-        world_brick_tf.transform.translation.x = request.brick_location.x
-        world_brick_tf.transform.translation.y = request.brick_location.y
-        world_brick_tf.transform.translation.z = request.brick_location.y
-        self.broadcaster.sendTransform(world_brick_tf)
-        
-        self.brick = Marker()
-        self.brick.header.frame_id = 'world'
-        self.brick.header.stamp = self.get_clock().now().to_msg()
-        self.brick.id = 5
-        self.brick.type = Marker.CUBE
-        self.brick.action = Marker.ADD
-        self.brick.scale.x = 0.5
-        self.brick.scale.y = 0.5
-        self.brick.scale.z = 0.5
-        self.brick.pose.position.x = request.brick_location.x
-        self.brick.pose.position.y = request.brick_location.y
-        self.brick.pose.position.z = request.brick_location.z
-        self.brick.color.r = 0.0
-        self.brick.color.g = 1.0
-        self.brick.color.b = 1.0
-        self.brick.color.a = 1.0
-        
-        self.brick_pub.publish(self.brick)
-        
-        #Set the brick location 
+        self.place_state = True
         self.world.brick = (request.brick_location.x, request.brick_location.y, request.brick_location.z)
         
         return response
     
     def drop_brick(self, request, response):
-        self.world.drop()
+        self.drop_state = True
         
         return response
         
