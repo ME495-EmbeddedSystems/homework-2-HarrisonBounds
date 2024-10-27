@@ -19,7 +19,8 @@ import numpy as np
 
 
 class Turtle_Robot_Node(Node):
-    """Node that controls the movement of a turtle from the turtlesim package
+    """
+    Node that controls the movement of a turtle from the turtlesim package
 
     PUBLISHERS:
         + JointState /joint_states - The joint states for each joint of the turtle robot
@@ -78,6 +79,9 @@ class Turtle_Robot_Node(Node):
         self.goal_x = None
         self.goal_y = None
         self.distance_to_goal = 0.0
+        self.threshold = 0.05
+        self.declare_parameter("max_velocity", value=3.0)
+        self.max_velocity = self.get_parameter("max_velocity").get_parameter_value().double_value
         self.static_broadcaster.sendTransform(self.world_odom_tf)
         self.broadcaster = TransformBroadcaster(self, qos)
         
@@ -108,25 +112,25 @@ class Turtle_Robot_Node(Node):
         odom_base_link.transform.rotation.w = q[3]
         self.broadcaster.sendTransform(odom_base_link)
         
-        if self.goal_x != None and self.goal_y != None and self.goal_x != self.delta_x and self.goal_y != self.delta_y:
-            self.angle = math.atan2(self.goal_y - self.delta_y, self.goal_x - self.delta_x)
-            self.distance_to_goal = math.sqrt((self.goal_y - self.delta_y)**2 + (self.goal_x - self.delta_x)**2)
-            move = self.forward_velocity * self.distance_to_goal
+        if self.goal_x != None and self.goal_y != None:
+            self.distance_to_goal = self.get_distance_from_goal()
+            if self.distance_to_goal > self.threshold:
+                self.angle = math.atan2(self.goal_y - self.delta_y, self.goal_x - self.delta_x)
+                self.distance_to_goal = math.sqrt((self.goal_y - self.delta_y)**2 + (self.goal_x - self.delta_x)**2)
+                
+                if self.angle > np.pi:
+                    self.angle = self.angle - 2*np.pi
+                elif self.angle < -np.pi:
+                    self.angle = self.angle + 2*np.pi
             
-            if self.angle > np.pi:
-                self.angle = self.angle - 2*np.pi
-            elif self.angle < -np.pi:
-                self.angle = self.angle + 2*np.pi
-        
-            if move > self.max_velocity:
-                move = self.max_velocity
-            elif move < self.min_velocity:
-                move = self.min_velocity
-        
-            cmd_vel_msg = self.move_turtle(move * math.cos(self.angle), move * math.sin(self.angle))
-            self.cmd_vel_pub.publish(cmd_vel_msg)
+                cmd_vel_msg = self.move_turtle(self.max_velocity * math.cos(self.angle), self.max_velocity * math.sin(self.angle))
+                self.cmd_vel_pub.publish(cmd_vel_msg)
             
-        else:
+            else:
+                cmd_vel_msg = self.move_turtle(0, 0)
+                self.cmd_vel_pub.publish(cmd_vel_msg)
+                
+        else: 
             cmd_vel_msg = self.move_turtle(0, 0)
             self.cmd_vel_pub.publish(cmd_vel_msg)
             
@@ -175,6 +179,10 @@ class Turtle_Robot_Node(Node):
         """
         self.goal_x = msg.pose.position.x
         self.goal_y = msg.pose.position.y
+        
+    def get_distance_from_goal(self):
+        dist = math.sqrt((self.goal_y - self.delta_y)**2 + (self.goal_x - self.delta_x)**2)
+        return dist
     
         
 def quaternion_from_euler(ai: float, aj: float, ak: float) -> list:

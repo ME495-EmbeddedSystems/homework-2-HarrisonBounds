@@ -58,6 +58,9 @@ class Arena_Node(Node):
         self.world = World(self.brick_location, self.gravity, self.brick_radius, self.interval)
         self.drop_state = False
         self.place_state = False
+        self.declare_parameter("platform_height", value=2.0)
+        self.platform_height = self.get_parameter("platform_height").get_parameter_value().double_value
+        self.platform_length = self.platform_height / 10
     
         
     def timer_callback(self):
@@ -98,6 +101,11 @@ class Arena_Node(Node):
                 self.location.z = self.world.brick[2]
                 self.brick_location_pub.publish(self.location)
                 self.world.drop()
+                
+            if self.world.brick[2] <= (self.platform_height + (self.platform_height / (self.platform_height*2)) - self.platform_length):
+                self.drop_state = False
+                
+            
                 
             
     def place_brick(self, request: Point, response: Empty) -> Empty:
