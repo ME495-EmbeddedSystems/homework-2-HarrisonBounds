@@ -12,6 +12,7 @@ from turtle_brick.physics import World
 from std_srvs.srv import Empty
 
 
+
 class Arena_Node(Node):
     """ 
     Node that build the arena elements including walls and brick
@@ -97,6 +98,7 @@ class Arena_Node(Node):
                 self.location.z = self.world.brick[2]
                 self.brick_location_pub.publish(self.location)
                 self.world.drop()
+                
             
     def place_brick(self, request: Point, response: Empty) -> Empty:
         """

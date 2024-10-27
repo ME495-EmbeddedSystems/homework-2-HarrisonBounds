@@ -13,6 +13,7 @@ from turtle_brick.physics import World
 from std_srvs.srv import Empty
 from turtlesim.msg import Pose
 import math
+from geometry_msgs.msg import PoseStamped
 
 class Arena_Node(Node):
     def __init__(self):
@@ -25,6 +26,8 @@ class Arena_Node(Node):
         
         self.brick_sub = self.create_subscription(Point, "/brick_location_topic", callback=self.brick_state_callback, qos_profile=qos)
         self.pose_subscription = self.create_subscription(Pose, '/turtlesim1/turtle1/pose', self.pose_callback, 10)
+        self.goal_pub = self.create_publisher(PoseStamped, "/goal_pose", qos)
+        self.goal = None
         self.drop_state = False
         
         self.declare_parameter("platform_height", value=2.0)
@@ -39,14 +42,19 @@ class Arena_Node(Node):
         self.brick_z = 0.0
         self.current_x = 0.0
         self.current_y = 0.0
+        self.catch_state = False
         
     
     def timer_callback(self):
         #Calculate if the robot can catch the brick or not
         if self.drop_state:
-            z_displacement = self.brick_z - self.platform_height
-            self.is_catch_valid(z_displacement)
-            pass
+            self.goal = PoseStamped()
+            self.goal.header.stamp = self.get_clock().now().to_msg()
+            self.goal.header.frame_id = "world"
+            self.goal.pose.position.x = self.brick_x
+            self.goal.pose.position.y = self.brick_y
+            self.goal_pub.publish(self.goal)
+            
             
     def brick_state_callback(self, msg):
         self.brick_x = msg.x
@@ -54,6 +62,8 @@ class Arena_Node(Node):
         self.brick_z = msg.z
         if msg is not None:
             self.drop_state = True
+            z_displacement = self.brick_z - self.platform_height
+            self.is_catch_valid(z_displacement)
             
     def pose_callback(self, msg):
         self.current_x = msg.x
@@ -68,7 +78,7 @@ class Arena_Node(Node):
         if brick_time > robot_time:
             self.get_logger().error("UNREACHABLE")
         else:
-            
+            self.catch_state = True
         
     def get_distance_from_goal(self):
         dist = math.sqrt((self.brick_y - self.current_y)**2 + (self.brick_x - self.current_x)**2)
