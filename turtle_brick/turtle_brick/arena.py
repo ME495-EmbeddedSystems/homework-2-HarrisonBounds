@@ -1,4 +1,4 @@
-"""ROS2 Node that simulates the environment"""
+
 import rclpy
 from rclpy.node import Node
 import rclpy.parameter
@@ -13,42 +13,54 @@ from std_srvs.srv import Empty
 
 
 class Arena_Node(Node):
+    """ 
+    Node that build the arena elements including walls and brick
+
+    PUBLISHERS:
+        + MarkerArray /visualization_marker_array - Walls markers for the arena
+        + Marker /visualization_marker - Brick marker for the arena 
+        + Point /brick_location_topic - The current position of the brick
+        
+    SUBSCRIBERS:
+        + None
+        
+    SERVICES:
+        + Place (Point) - Place the brick at a given location
+        + Empty (Empty) - Drops the brick
+        
+    PARAMETERS: 
+        + None
+    """
+    
     def __init__(self):
+        """Initialize the arena"""
         super().__init__('arena_node')
         self.frequency = 250
         self.interval = 1/self.frequency
         self._tmr = self.create_timer(self.interval, self.timer_callback)
-        
         qos = QoSProfile(depth=10, durability=QoSDurabilityPolicy.TRANSIENT_LOCAL)
-    
         self.marker_array_pub = self.create_publisher(MarkerArray, '/visualization_marker_array', qos)
         self.brick_pub = self.create_publisher(Marker, "/visualization_marker", qos)
         self.brick_location_pub = self.create_publisher(Point, "/brick_location_topic", qos)
         self.location = None
-        
         self.m1 = None
         self.m2 = None
         self.m3 = None
         self.m4 = None
-        
         self.broadcaster = TransformBroadcaster(self, qos)
-        
         self.place_brick_service = self.create_service(Place, 'place_brick', self.place_brick)
         self.drop_brick_service = self.create_service(Empty, 'drop_brick', self.drop_brick)
-        
         self.brick_location = None
-        
-        #Set the physics
         self.brick_location = (0.0, 0.0, 0.0)
         self.gravity = 9.8
         self.brick_radius = 0.25
-        
         self.world = World(self.brick_location, self.gravity, self.brick_radius, self.interval)
         self.drop_state = False
         self.place_state = False
     
         
     def timer_callback(self):
+        """Broadcasts the world to brick transform, places the brick marker, and drops the brick at a fixed frequency"""
         self.place_walls()
         
         if self.place_state:
@@ -76,9 +88,7 @@ class Arena_Node(Node):
             self.brick_marker.color.g = 1.0
             self.brick_marker.color.b = 1.0
             self.brick_marker.color.a = 1.0
-            
             self.brick_pub.publish(self.brick_marker)
-            
             
             if self.drop_state:
                 self.location = Point()
@@ -86,23 +96,32 @@ class Arena_Node(Node):
                 self.location.y = self.world.brick[1]
                 self.location.z = self.world.brick[2]
                 self.brick_location_pub.publish(self.location)
-
                 self.world.drop()
             
-            
-    def place_brick(self, request, response):
+    def place_brick(self, request: Point, response: Empty) -> Empty:
+        """
+        Service that places the brick based on the location specified
+
+        Args:
+            request (Point): x, y, z coordinates of the brick
+            response (Empty): 
+
+        Returns:
+            Empty:
+        """
         self.place_state = True
         self.world.brick = (request.brick_location.x, request.brick_location.y, request.brick_location.z)
         
         return response
     
-    def drop_brick(self, request, response):
-        self.drop_state = True
+    def drop_brick(self, request: Empty, response: Empty) -> Empty:
+        """Service that toggle the drop_brick boolean to drop the brick"""
         
+        self.drop_state = True
         return response
         
     def place_walls(self):
-        #Wall 1
+        """Publishes the walls as a marker array in Rviz"""
         self.m1 = Marker()
         self.m1.header.frame_id = 'world'
         self.m1.header.stamp = self.get_clock().now().to_msg()
@@ -124,8 +143,6 @@ class Arena_Node(Node):
         self.m1.color.b = 1.0
         self.m1.color.a = 1.0
         
-        
-        # #Wall 2
         self.m2 = Marker()
         self.m2.header.frame_id = 'world'
         self.m2.header.stamp = self.get_clock().now().to_msg()
@@ -147,7 +164,6 @@ class Arena_Node(Node):
         self.m2.color.b = 1.0
         self.m2.color.a = 1.0
         
-        #Wall 3
         self.m3 = Marker()
         self.m3.header.frame_id = 'world'
         self.m3.header.stamp = self.get_clock().now().to_msg()
@@ -169,7 +185,6 @@ class Arena_Node(Node):
         self.m3.color.b = 0.0
         self.m3.color.a = 1.0
         
-        #Wall 4
         self.m4 = Marker()
         self.m4.header.frame_id = 'world'
         self.m4.header.stamp = self.get_clock().now().to_msg()
@@ -193,13 +208,10 @@ class Arena_Node(Node):
         
         self.marker_array = MarkerArray()
         self.marker_array.markers = [self.m1, self.m2, self.m3, self.m4]
-        
         self.marker_array_pub.publish(self.marker_array)
-    
-        
-    
+
 def main(args=None):
-    """Entrypoint for the mynode ROS node."""
+    """Entrypoint for the Arena ROS2 node."""
     rclpy.init(args=args)
     node = Arena_Node()
     rclpy.spin(node)

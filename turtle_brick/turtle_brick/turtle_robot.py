@@ -1,3 +1,8 @@
+"""
+Homework 2 for ME 495: Embedded Systems in Robotics
+Moving a turtle robot in Rviz to catch a falling brick
+"""
+
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, QoSDurabilityPolicy
@@ -14,41 +19,50 @@ import numpy as np
 
 
 class Turtle_Robot_Node(Node):
+    """Node that controls the movement of a turtle from the turtlesim package
+
+    PUBLISHERS:
+        + JointState /joint_states - The joint states for each joint of the turtle robot
+        + Odometry /odom - The position and orientation of the odom to base_link transform
+        + Twist /turtlesim1/turtle1/cmd_vel - The velocity of the turtle moving between waypoints
+        
+    SUBSCRIBERS:
+        + PoseStamped /goal_pose - The location of the 'goal' / the brick x, y location
+        + Pose turtle1/pose - The current pose of the turtle
+        +Tilt
+        
+    SERVICES:
+        + None
+        
+    PARAMETERS: 
+        + None
+        
+    """
     def __init__(self):
         super().__init__('turtle_bot_node')
-        
         self.frequency = 100
         self.interval = 1 / self.frequency
-        
         qos = QoSProfile(depth=10, durability=QoSDurabilityPolicy.TRANSIENT_LOCAL)
-        
         self.joint_state_pub = self.create_publisher(JointState, '/joint_states', 10)
-        self.wheel_radius = 0.04 #Change so that this is dynamic!
+        self.wheel_radius = 0.04
         self.forward_velocity = 1.0
         self.max_velocity = 5.0
         self.min_velocity = 0.5
         self.angle = 0.0
         self.old_time = self.get_clock().now().nanoseconds
-        self.old_time = self.old_time / 1e9 #Transform nanoseconds to seconds
-        
+        self.old_time = self.old_time / 1e9 
         self.odom_pub = self.create_publisher(Odometry, '/odom', 10)
         self.cmd_vel_pub = self.create_publisher(Twist, '/turtlesim1/turtle1/cmd_vel', 10)
-        
         self.goal_sub = self.create_subscription(PoseStamped, '/goal_pose', self.goal_callback, 10)
-        #Create tilt subscriber??
         self.pose_subscription = self.create_subscription(Pose, '/turtlesim1/turtle1/pose', self.pose_callback, 10)
         self.delta_x = 0.0
         self.delta_y = 0.0
         self.delta_theta = 0.0
         self.pose = 0.0
-        
         self._tmr = self.create_timer(self.interval, self.timer_callback)
-        
-        #Create the odometry static frame
         self.odomX = 5.54
         self.odomY = 5.54
         self.static_broadcaster = StaticTransformBroadcaster(self, qos)
-        
         self.world_odom_tf = TransformStamped()
         self.world_odom_tf.header.stamp = self.get_clock().now().to_msg()
         self.world_odom_tf.header.frame_id = "world"
@@ -61,29 +75,26 @@ class Turtle_Robot_Node(Node):
         self.world_odom_tf.transform.rotation.y = q[1]
         self.world_odom_tf.transform.rotation.z = q[2]
         self.world_odom_tf.transform.rotation.w = q[3]
-        
         self.goal_x = None
         self.goal_y = None
         self.distance_to_goal = 0.0
-        
-
         self.static_broadcaster.sendTransform(self.world_odom_tf)
-        
         self.broadcaster = TransformBroadcaster(self, qos)
         
         
     def timer_callback(self):
-        #Publish joint states
+        """
+        Timer that publishes joint states, broadcasts non-static frames, calculates the movement to the goal pose, and publishes the odometry message
+        """
+        
         joint_state_msg = JointState()
         joint_state_msg.header.stamp = self.get_clock().now().to_msg()
         joint_state_msg.header.frame_id = "odom"
         joint_state_msg.name = ["j1", "j2", "j3"]
         joint_state_msg.position = [0.0, 0.0, 0.0]
         joint_state_msg.velocity = [0.0, 0.0, 0.0]
-
         # self.joint_state_pub.publish(joint_state_msg)
        
-        #Publish odom to base_link transform
         odom_base_link = TransformStamped()
         odom_base_link.header.frame_id = 'odom'
         odom_base_link.child_frame_id = 'base_link'
@@ -97,8 +108,6 @@ class Turtle_Robot_Node(Node):
         odom_base_link.transform.rotation.w = q[3]
         self.broadcaster.sendTransform(odom_base_link)
         
-        
-        #Publish cmd_vel msg if the robot hasnt reached the goal
         if self.goal_x != None and self.goal_y != None and self.goal_x != self.delta_x and self.goal_y != self.delta_y:
             self.angle = math.atan2(self.goal_y - self.delta_y, self.goal_x - self.delta_x)
             self.distance_to_goal = math.sqrt((self.goal_y - self.delta_y)**2 + (self.goal_x - self.delta_x)**2)
@@ -121,8 +130,6 @@ class Turtle_Robot_Node(Node):
             cmd_vel_msg = self.move_turtle(0, 0)
             self.cmd_vel_pub.publish(cmd_vel_msg)
             
-        
-        # Publish Odometry message
         odom_msg = Odometry()
         odom_msg.header.stamp = self.get_clock().now().to_msg()
         odom_msg.header.frame_id = 'odom'
@@ -137,30 +144,50 @@ class Turtle_Robot_Node(Node):
         self.odom_pub.publish(odom_msg)
 
     
-    def move_turtle(self, xdot, ydot):
-        """ Create a twist suitable for a turtle
+    def move_turtle(self, xdot: float, ydot: float) -> Twist:
+        """Creates a Twist message to publish on the cmd_vel topic
 
-            Args:
-            xdot (float) : the forward velocity
-            omega (float) : the angular velocity
+        Args:
+            xdot (float): linear translation in the x direction
+            ydot (float): linear translation in the y direction
 
-            Returns:
-            Twist - a 2D twist object corresponding to linear/angular velocity
+        Returns:
+            Twist: Object that contains linear and angular components to be published on the cmd_vel topic
         """
         return Twist(linear = Vector3(x = float(xdot), y = float(ydot), z = 0.0),
                     angular = Vector3(x = 0.0, y = 0.0, z = 0.0))
         
-    def pose_callback(self, msg):
+    def pose_callback(self, msg: Pose):
+        """Subscriber callbcak that gets the current pose of the turtlesim turtle
+
+        Args:
+            msg (Pose): The x, y, and theta position and orientation of the turtle
+        """
         self.delta_x = msg.x
         self.delta_y = msg.y
         self.delta_theta = msg.theta
         
-    def goal_callback(self, msg):
+    def goal_callback(self, msg: PoseStamped):
+        """Subscriber callback that locates the goal pose
+
+        Args:
+            msg (PoseStamped): The x and y position of the goal
+        """
         self.goal_x = msg.pose.position.x
         self.goal_y = msg.pose.position.y
     
         
-def quaternion_from_euler(ai, aj, ak):
+def quaternion_from_euler(ai: float, aj: float, ak: float) -> list:
+    """Returns the quaternion based on x, y, and theta
+
+    Args:
+        ai (float): x 
+        aj (float): y
+        ak (float): theta
+
+    Returns:
+        list: Quaternion list with 4 elements (x, y, z, w)
+    """
     ai /= 2.0
     aj /= 2.0
     ak /= 2.0
@@ -184,7 +211,7 @@ def quaternion_from_euler(ai, aj, ak):
     return q      
     
 def main(args=None):
-    """Entrypoint for the mynode ROS node."""
+    """Entrypoint for the turtle_robot ROS2 node"""
     rclpy.init(args=args)
     node = Turtle_Robot_Node()
     rclpy.spin(node)
