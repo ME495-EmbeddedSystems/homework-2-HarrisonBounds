@@ -5,15 +5,12 @@ from rclpy.node import Node
 import rclpy.parameter
 import rclpy.time
 from rclpy.qos import QoSProfile, QoSDurabilityPolicy
-from visualization_msgs.msg import Marker, MarkerArray
-from tf2_ros import TransformBroadcaster
-from geometry_msgs.msg import TransformStamped, Point
-from turtle_brick_interfaces.srv import Place
-from turtle_brick.physics import World
-from std_srvs.srv import Empty
+from geometry_msgs.msg import Point
 from turtlesim.msg import Pose
 import math
 from geometry_msgs.msg import PoseStamped
+from visualization_msgs.msg import Marker
+from builtin_interfaces.msg import Duration
 
 class Arena_Node(Node):
     def __init__(self):
@@ -27,7 +24,9 @@ class Arena_Node(Node):
         self.brick_sub = self.create_subscription(Point, "/brick_location_topic", callback=self.brick_state_callback, qos_profile=qos)
         self.pose_subscription = self.create_subscription(Pose, '/turtlesim1/turtle1/pose', self.pose_callback, 10)
         self.goal_pub = self.create_publisher(PoseStamped, "/goal_pose", qos)
+        self.text_pub = self.create_publisher(Marker, "/visualization_marker", qos)
         self.goal = None
+        self.origin_goal = None
         self.drop_state = False
         
         self.declare_parameter("platform_height", value=2.0)
@@ -36,18 +35,20 @@ class Arena_Node(Node):
         self.platform_height = self.get_parameter("platform_height").get_parameter_value().double_value
         self.max_velocity = self.get_parameter("max_velocity").get_parameter_value().double_value
         self.gravity_accel = self.get_parameter("gravity_accel").get_parameter_value().double_value
+        self.platform_length = self.platform_height / 10
         
         self.brick_x = 0.0
         self.brick_y = 0.0
         self.brick_z = 0.0
         self.current_x = 0.0
         self.current_y = 0.0
-        self.catch_state = False
+        self.can_catch = False
+        self.run_first = True
         
     
     def timer_callback(self):
         #Calculate if the robot can catch the brick or not
-        if self.drop_state:
+        if self.can_catch:
             self.goal = PoseStamped()
             self.goal.header.stamp = self.get_clock().now().to_msg()
             self.goal.header.frame_id = "world"
@@ -55,6 +56,14 @@ class Arena_Node(Node):
             self.goal.pose.position.y = self.brick_y
             self.goal_pub.publish(self.goal)
             
+        if self.brick_z <= (self.platform_height + (self.platform_height / (self.platform_height*2)) - self.platform_length):
+            self.origin_goal = PoseStamped()
+            self.origin_goal.header.stamp = self.get_clock().now().to_msg()
+            self.origin_goal.header.frame_id = "world"
+            self.origin_goal.pose.position.x = 5.45
+            self.origin_goal.pose.position.y = 5.45
+            self.goal_pub.publish(self.origin_goal)
+            self.can_catch = False
             
     def brick_state_callback(self, msg):
         self.brick_x = msg.x
@@ -63,7 +72,9 @@ class Arena_Node(Node):
         if msg is not None:
             self.drop_state = True
             z_displacement = self.brick_z - self.platform_height
-            self.is_catch_valid(z_displacement)
+            if self.run_first:
+                self.is_catch_valid(z_displacement)
+                self.run_first = False
             
     def pose_callback(self, msg):
         self.current_x = msg.x
@@ -75,10 +86,30 @@ class Arena_Node(Node):
         robot_distance = self.get_distance_from_goal()
         robot_time = robot_distance / self.max_velocity
         
-        if brick_time > robot_time:
+        if brick_time < robot_time:
             self.get_logger().error("UNREACHABLE")
+            self.can_catch = False
+            self.text_marker = Marker()
+            self.text_marker.header.frame_id = 'world'
+            self.text_marker.header.stamp = self.get_clock().now().to_msg()
+            self.text_marker.id = 10
+            self.text_marker.type = Marker.TEXT_VIEW_FACING
+            self.text_marker.action = Marker.ADD
+            self.text_marker.scale.x = 0.0
+            self.text_marker.scale.y = 0.0
+            self.text_marker.scale.z = 1.0
+            self.text_marker.text = "UNREACHABLE"
+            self.text_marker.pose.position.x = 5.5
+            self.text_marker.pose.position.y = 5.5
+            self.text_marker.pose.position.z = 1.0
+            self.text_marker.color.r = 1.0
+            self.text_marker.color.g = 0.0
+            self.text_marker.color.b = 1.0
+            self.text_marker.color.a = 1.0
+            self.text_marker.lifetime = Duration(seconds=3)
+            self.text_pub.publish(self.text_marker)
         else:
-            self.catch_state = True
+            self.can_catch = True
         
     def get_distance_from_goal(self):
         dist = math.sqrt((self.brick_y - self.current_y)**2 + (self.brick_x - self.current_x)**2)

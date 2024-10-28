@@ -31,7 +31,8 @@ setup(
             #Use this name for your executable in your launch file!!
             'turtle_bot_node = turtle_brick.turtle_robot:main',
             'arena_node = turtle_brick.arena:main',
-            'catcher_node = turtle_brick.catcher:main'
+            'catcher_node = turtle_brick.catcher:main',
+            'test_node = turtle_brick.test_node:main'
         ],
     },
 )

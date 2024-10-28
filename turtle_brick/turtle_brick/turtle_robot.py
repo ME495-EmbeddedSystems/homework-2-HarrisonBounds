@@ -41,10 +41,10 @@ class Turtle_Robot_Node(Node):
     """
     def __init__(self):
         super().__init__('turtle_bot_node')
-        self.frequency = 100
+        self.frequency = 100.0
         self.interval = 1 / self.frequency
         qos = QoSProfile(depth=10, durability=QoSDurabilityPolicy.TRANSIENT_LOCAL)
-        self.joint_state_pub = self.create_publisher(JointState, '/joint_states', 10)
+        self.joint_state_pub = self.create_publisher(JointState, 'joint_states', 10)
         self.wheel_radius = 0.04
         self.forward_velocity = 1.0
         self.max_velocity = 5.0
@@ -66,8 +66,8 @@ class Turtle_Robot_Node(Node):
         self.static_broadcaster = StaticTransformBroadcaster(self, qos)
         self.world_odom_tf = TransformStamped()
         self.world_odom_tf.header.stamp = self.get_clock().now().to_msg()
-        self.world_odom_tf.header.frame_id = "world"
-        self.world_odom_tf.child_frame_id = "odom"
+        self.world_odom_tf.header.frame_id = 'world'
+        self.world_odom_tf.child_frame_id = 'odom'
         self.world_odom_tf.transform.translation.x = self.odomX
         self.world_odom_tf.transform.translation.y = self.odomY
         self.world_odom_tf.transform.translation.z = 0.0
@@ -83,21 +83,18 @@ class Turtle_Robot_Node(Node):
         self.declare_parameter("max_velocity", value=3.0)
         self.max_velocity = self.get_parameter("max_velocity").get_parameter_value().double_value
         self.static_broadcaster.sendTransform(self.world_odom_tf)
-        self.broadcaster = TransformBroadcaster(self, qos)
+        self.broadcaster = TransformBroadcaster(self, 10)
         
         
     def timer_callback(self):
         """
         Timer that publishes joint states, broadcasts non-static frames, calculates the movement to the goal pose, and publishes the odometry message
         """
-        
         joint_state_msg = JointState()
         joint_state_msg.header.stamp = self.get_clock().now().to_msg()
-        joint_state_msg.header.frame_id = "odom"
         joint_state_msg.name = ["j1", "j2", "j3"]
         joint_state_msg.position = [0.0, 0.0, 0.0]
-        joint_state_msg.velocity = [0.0, 0.0, 0.0]
-        # self.joint_state_pub.publish(joint_state_msg)
+        self.joint_state_pub.publish(joint_state_msg)
        
         odom_base_link = TransformStamped()
         odom_base_link.header.frame_id = 'odom'

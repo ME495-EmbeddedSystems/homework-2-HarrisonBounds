@@ -1,16 +1,21 @@
+from geometry_msgs.msg import Point, TransformStamped
 
 import rclpy
-from rclpy.node import Node
 import rclpy.parameter
 import rclpy.time
-from rclpy.qos import QoSProfile, QoSDurabilityPolicy
-from visualization_msgs.msg import Marker, MarkerArray
-from tf2_ros import TransformBroadcaster
-from geometry_msgs.msg import TransformStamped, Point
-from turtle_brick_interfaces.srv import Place
-from turtle_brick.physics import World
+from rclpy.node import Node
+from rclpy.qos import QoSDurabilityPolicy, QoSProfile
+
 from std_srvs.srv import Empty
 
+from tf2_ros import TransformBroadcaster
+
+from turtle_brick.physics import World
+
+from turtle_brick_interfaces.srv import Place
+
+
+from visualization_msgs.msg import Marker, MarkerArray
 
 
 class Arena_Node(Node):
@@ -104,6 +109,7 @@ class Arena_Node(Node):
                 
             if self.world.brick[2] <= (self.platform_height + (self.platform_height / (self.platform_height*2)) - self.platform_length):
                 self.drop_state = False
+                
                 
             
                 

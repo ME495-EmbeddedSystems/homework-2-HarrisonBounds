@@ -15,10 +15,10 @@ def generate_launch_description():
                         [FindPackageShare("turtle_brick"), "turtle.urdf.xacro"])])}
                         ]
             ),
-        Node(
-                package="joint_state_publisher_gui",
-                executable="joint_state_publisher_gui"
-            ),
+        # Node(
+        #         package="joint_state_publisher_gui",
+        #         executable="joint_state_publisher_gui"
+        #     ),
         Node(
             package="rviz2",
             executable="rviz2",
