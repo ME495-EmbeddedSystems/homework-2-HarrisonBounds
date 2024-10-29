@@ -87,8 +87,8 @@ class Turtle_Robot_Node(Node):
         self.goal_x = None
         self.goal_y = None
         self.distance_to_goal = 0.0
-        self.threshold = 0.05
-        self.declare_parameter("max_velocity", value=3.0)
+        self.threshold = 0.1
+        self.declare_parameter('max_velocity', value=3.0)
         self.max_velocity = self.get_parameter('max_velocity').get_parameter_value().double_value
         self.static_broadcaster.sendTransform(self.world_odom_tf)
         self.broadcaster = TransformBroadcaster(self, 10)
@@ -116,6 +116,7 @@ class Turtle_Robot_Node(Node):
 
         if self.goal_x is not None and self.goal_y is not None:
             self.distance_to_goal = self.get_distance_from_goal()
+
             if self.distance_to_goal > self.threshold:
                 self.angle = math.atan2(self.goal_y - self.delta_y, self.goal_x - self.delta_x)
                 self.distance_to_goal = math.sqrt((self.goal_y - self.delta_y)**2 + (self.goal_x - self.delta_x)**2)
@@ -130,7 +131,7 @@ class Turtle_Robot_Node(Node):
 
             else:
                 cmd_vel_msg = self.move_turtle(0, 0)
-                self.cmd_vel_pub.publish(cmd_vel_msg)      
+                self.cmd_vel_pub.publish(cmd_vel_msg)
         else:
             cmd_vel_msg = self.move_turtle(0, 0)
             self.cmd_vel_pub.publish(cmd_vel_msg)

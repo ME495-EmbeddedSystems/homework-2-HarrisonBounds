@@ -69,6 +69,8 @@ class Catcher_Node(Node):
             self.origin_goal.pose.position.x = 5.45
             self.origin_goal.pose.position.y = 5.45
             self.goal_pub.publish(self.origin_goal)
+            
+            
             self.can_catch = False
 
     def brick_state_callback(self, msg):

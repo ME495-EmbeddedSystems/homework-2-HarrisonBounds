@@ -39,16 +39,16 @@ def generate_launch_description():
             executable='catcher_node',
             name='catcher_node',
         ),
-        Node(
-                package='robot_state_publisher',
-                executable='robot_state_publisher',
-                parameters=[
-                    {'robot_description':
-                        Command([ExecutableInPackage('xacro', 'xacro'), ' ',
-                                PathJoinSubstitution(
-                                [FindPackageShare('turtle_brick'), 'turtle.urdf.xacro'])])}
-                                ]
-                ),
+        # Node(
+        #         package='robot_state_publisher',
+        #         executable='robot_state_publisher',
+        #         parameters=[
+        #             {'robot_description':
+        #                 Command([ExecutableInPackage('xacro', 'xacro'), ' ',
+        #                         PathJoinSubstitution(
+        #                         [FindPackageShare('turtle_brick'), 'turtle.urdf.xacro'])])}
+        #                         ]
+        #         ),
 
         # Include another launch file
         IncludeLaunchDescription(
