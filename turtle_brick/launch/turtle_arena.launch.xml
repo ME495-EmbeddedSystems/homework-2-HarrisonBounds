@@ -1,0 +1,12 @@
+<launch>
+
+  <group>
+    <include file="$(find-pkg-share turtle_brick)/run_turtle.launch.xml">
+      <arg name="use_jsp" value="none"/>
+    </include>
+  </group>
+
+  <node pkg="turtle_brick" exec="arena_node"/>
+  <node pkg="turtle_brick" exec="catcher_node"/>
+
+</launch>

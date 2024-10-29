@@ -71,7 +71,6 @@ class Arena_Node(Node):
     def timer_callback(self):
         """Broadcasts the world to brick transform, places the brick marker, and drops the brick at a fixed frequency"""
         self.place_walls()
-        
         if self.place_state:
             world_brick_tf = TransformStamped()
             world_brick_tf.header.frame_id = 'world'
@@ -80,7 +79,6 @@ class Arena_Node(Node):
             world_brick_tf.transform.translation.y = self.world.brick[1]
             world_brick_tf.transform.translation.z = self.world.brick[2]
             self.broadcaster.sendTransform(world_brick_tf)
-            
             self.brick_marker = Marker()
             self.brick_marker.header.frame_id = 'world'
             self.brick_marker.header.stamp = self.get_clock().now().to_msg()
@@ -98,7 +96,6 @@ class Arena_Node(Node):
             self.brick_marker.color.b = 1.0
             self.brick_marker.color.a = 1.0
             self.brick_pub.publish(self.brick_marker)
-            
             if self.drop_state:
                 self.location = Point()
                 self.location.x = self.world.brick[0]
@@ -106,14 +103,8 @@ class Arena_Node(Node):
                 self.location.z = self.world.brick[2]
                 self.brick_location_pub.publish(self.location)
                 self.world.drop()
-                
             if self.world.brick[2] <= (self.platform_height + (self.platform_height / (self.platform_height*2)) - self.platform_length):
-                self.drop_state = False
-                
-                
-            
-                
-            
+                self.drop_state = False      
     def place_brick(self, request: Point, response: Empty) -> Empty:
         """
         Service that places the brick based on the location specified
