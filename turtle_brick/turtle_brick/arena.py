@@ -15,6 +15,7 @@ from turtle_brick.physics import World
 
 from turtle_brick_interfaces.srv import Place
 
+from turtlesim.msg import Pose
 
 from visualization_msgs.msg import Marker, MarkerArray
 
@@ -49,11 +50,14 @@ class Arena_Node(Node):
         self.marker_array_pub = self.create_publisher(MarkerArray, '/visualization_marker_array', qos)
         self.brick_pub = self.create_publisher(Marker, '/visualization_marker', qos)
         self.brick_location_pub = self.create_publisher(Point, '/brick_location_topic', qos)
+        self.pose_subscription = self.create_subscription(Pose, '/turtlesim1/turtle1/pose', self.pose_callback, 10)
         self.location = None
         self.m1 = None
         self.m2 = None
         self.m3 = None
         self.m4 = None
+        self.delta_x = 0.0
+        self.delta_y = 0.0
         self.broadcaster = TransformBroadcaster(self, qos)
         self.place_brick_service = self.create_service(Place, 'place_brick', self.place_brick)
         self.drop_brick_service = self.create_service(Empty, 'drop_brick', self.drop_brick)
@@ -64,6 +68,7 @@ class Arena_Node(Node):
         self.world = World(self.brick_location, self.gravity, self.brick_radius, self.interval)
         self.drop_state = False
         self.place_state = False
+        self.caught_state = False
         self.declare_parameter("platform_height", value=2.0)
         self.platform_height = self.get_parameter('platform_height').get_parameter_value().double_value
         self.platform_length = self.platform_height / 10
@@ -105,6 +110,34 @@ class Arena_Node(Node):
                 self.world.drop()
             if self.world.brick[2] <= (self.platform_height + (self.platform_height / (self.platform_height*2)) - self.platform_length):
                 self.drop_state = False
+                self.caught_state = True
+                self.place_state = False
+
+        if self.caught_state:
+            world_brick_tf = TransformStamped()
+            world_brick_tf.header.frame_id = 'world'
+            world_brick_tf.child_frame_id = 'brick'
+            world_brick_tf.transform.translation.x = self.delta_x
+            world_brick_tf.transform.translation.y = self.delta_y
+            world_brick_tf.transform.translation.z = self.world.brick[2]
+            self.broadcaster.sendTransform(world_brick_tf)
+            self.brick_marker = Marker()
+            self.brick_marker.header.frame_id = 'world'
+            self.brick_marker.header.stamp = self.get_clock().now().to_msg()
+            self.brick_marker.id = 5
+            self.brick_marker.type = Marker.CUBE
+            self.brick_marker.action = Marker.ADD
+            self.brick_marker.scale.x = 0.5
+            self.brick_marker.scale.y = 0.5
+            self.brick_marker.scale.z = 0.5
+            self.brick_marker.pose.position.x = self.delta_x
+            self.brick_marker.pose.position.y = self.delta_y
+            self.brick_marker.pose.position.z = self.world.brick[2]
+            self.brick_marker.color.r = 0.0
+            self.brick_marker.color.g = 1.0
+            self.brick_marker.color.b = 1.0
+            self.brick_marker.color.a = 1.0
+            self.brick_pub.publish(self.brick_marker)
 
     def place_brick(self, request: Point, response: Empty) -> Empty:
         """
@@ -126,6 +159,15 @@ class Arena_Node(Node):
         """Service that toggle the drop_brick boolean to drop the brick."""
         self.drop_state = True
         return response
+
+    def pose_callback(self, msg: Pose):
+        """Get the current pose of the turtlesim turtle.
+
+        Args:
+            msg (Pose): The x, y, and theta position and orientation of the turtle
+        """
+        self.delta_x = msg.x
+        self.delta_y = msg.y
 
     def place_walls(self):
         """Publish the walls as a marker array in Rviz."""

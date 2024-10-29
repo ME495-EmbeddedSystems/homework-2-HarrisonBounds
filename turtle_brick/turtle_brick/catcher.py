@@ -16,7 +16,7 @@ from turtlesim.msg import Pose
 
 from visualization_msgs.msg import Marker
 
-class Arena_Node(Node):
+class Catcher_Node(Node):
     """Catch the falling brick."""
 
     def __init__(self):
@@ -39,9 +39,9 @@ class Arena_Node(Node):
         self.declare_parameter("platform_height", value=2.0)
         self.declare_parameter("max_velocity", value=3.0)
         self.declare_parameter("gravity_accel", value=9.8)
-        self.platform_height = self.get_parameter("platform_height").get_parameter_value().double_value
-        self.max_velocity = self.get_parameter("max_velocity").get_parameter_value().double_value
-        self.gravity_accel = self.get_parameter("gravity_accel").get_parameter_value().double_value
+        self.platform_height = self.get_parameter('platform_height').get_parameter_value().double_value
+        self.max_velocity = self.get_parameter('max_velocity').get_parameter_value().double_value
+        self.gravity_accel = self.get_parameter('gravity_accel').get_parameter_value().double_value
         self.platform_length = self.platform_height / 10
 
         self.brick_x = 0.0
@@ -57,15 +57,15 @@ class Arena_Node(Node):
         if self.can_catch:
             self.goal = PoseStamped()
             self.goal.header.stamp = self.get_clock().now().to_msg()
-            self.goal.header.frame_id = "world"
+            self.goal.header.frame_id = 'world'
             self.goal.pose.position.x = self.brick_x
             self.goal.pose.position.y = self.brick_y
             self.goal_pub.publish(self.goal)
 
-        if self.brick_z <= (self.platform_height + (self.platform_height / (self.platform_height*2)) - self.platform_length):
+        if self.brick_z <= self.platform_height + self.platform_height / (self.platform_height / self.platform_height*2):
             self.origin_goal = PoseStamped()
             self.origin_goal.header.stamp = self.get_clock().now().to_msg()
-            self.origin_goal.header.frame_id = "world"
+            self.origin_goal.header.frame_id = 'world'
             self.origin_goal.pose.position.x = 5.45
             self.origin_goal.pose.position.y = 5.45
             self.goal_pub.publish(self.origin_goal)
@@ -96,7 +96,7 @@ class Arena_Node(Node):
         robot_time = robot_distance / self.max_velocity
 
         if brick_time < robot_time:
-            self.get_logger().error("UNREACHABLE")
+            self.get_logger().error('UNREACHABLE')
             self.can_catch = False
             self.text_marker = Marker()
             self.text_marker.header.frame_id = 'world'
@@ -107,7 +107,7 @@ class Arena_Node(Node):
             self.text_marker.scale.x = 0.0
             self.text_marker.scale.y = 0.0
             self.text_marker.scale.z = 1.0
-            self.text_marker.text = "UNREACHABLE"
+            self.text_marker.text = 'UNREACHABLE'
             self.text_marker.pose.position.x = 5.5
             self.text_marker.pose.position.y = 5.5
             self.text_marker.pose.position.z = 1.0
@@ -129,7 +129,7 @@ class Arena_Node(Node):
 def main(args=None):
     """Entrypoint for the mynode ROS node."""
     rclpy.init(args=args)
-    node = Arena_Node()
+    node = Catcher_Node()
     rclpy.spin(node)
     node.destroy_node()
     rclpy.shutdown()
