@@ -1,3 +1,4 @@
+"""Create the arena for the turtle robot."""
 from geometry_msgs.msg import Point, TransformStamped
 
 import rclpy
@@ -19,35 +20,35 @@ from visualization_msgs.msg import Marker, MarkerArray
 
 
 class Arena_Node(Node):
-    """ 
-    Node that build the arena elements including walls and brick
+    """
+    Node that build the arena elements including walls and brick.
 
     PUBLISHERS:
         + MarkerArray /visualization_marker_array - Walls markers for the arena
         + Marker /visualization_marker - Brick marker for the arena 
         + Point /brick_location_topic - The current position of the brick
-        
+
     SUBSCRIBERS:
         + None
-        
+
     SERVICES:
         + Place (Point) - Place the brick at a given location
         + Empty (Empty) - Drops the brick
-        
-    PARAMETERS: 
+
+    PARAMETERS:
         + None
     """
-    
+
     def __init__(self):
-        """Initialize the arena"""
+        """Initialize the arena."""
         super().__init__('arena_node')
         self.frequency = 250
         self.interval = 1/self.frequency
         self._tmr = self.create_timer(self.interval, self.timer_callback)
         qos = QoSProfile(depth=10, durability=QoSDurabilityPolicy.TRANSIENT_LOCAL)
         self.marker_array_pub = self.create_publisher(MarkerArray, '/visualization_marker_array', qos)
-        self.brick_pub = self.create_publisher(Marker, "/visualization_marker", qos)
-        self.brick_location_pub = self.create_publisher(Point, "/brick_location_topic", qos)
+        self.brick_pub = self.create_publisher(Marker, '/visualization_marker', qos)
+        self.brick_location_pub = self.create_publisher(Point, '/brick_location_topic', qos)
         self.location = None
         self.m1 = None
         self.m2 = None
@@ -64,12 +65,11 @@ class Arena_Node(Node):
         self.drop_state = False
         self.place_state = False
         self.declare_parameter("platform_height", value=2.0)
-        self.platform_height = self.get_parameter("platform_height").get_parameter_value().double_value
+        self.platform_height = self.get_parameter('platform_height').get_parameter_value().double_value
         self.platform_length = self.platform_height / 10
-    
-        
+
     def timer_callback(self):
-        """Broadcasts the world to brick transform, places the brick marker, and drops the brick at a fixed frequency"""
+        """Broadcast the world to brick transform, places the brick marker, and drops the brick at a fixed frequency."""
         self.place_walls()
         if self.place_state:
             world_brick_tf = TransformStamped()
@@ -104,10 +104,11 @@ class Arena_Node(Node):
                 self.brick_location_pub.publish(self.location)
                 self.world.drop()
             if self.world.brick[2] <= (self.platform_height + (self.platform_height / (self.platform_height*2)) - self.platform_length):
-                self.drop_state = False      
+                self.drop_state = False
+
     def place_brick(self, request: Point, response: Empty) -> Empty:
         """
-        Service that places the brick based on the location specified
+        Service that places the brick based on the location specified.
 
         Args:
             request (Point): x, y, z coordinates of the brick
@@ -118,17 +119,16 @@ class Arena_Node(Node):
         """
         self.place_state = True
         self.world.brick = (request.brick_location.x, request.brick_location.y, request.brick_location.z)
-        
+
         return response
-    
+
     def drop_brick(self, request: Empty, response: Empty) -> Empty:
-        """Service that toggle the drop_brick boolean to drop the brick"""
-        
+        """Service that toggle the drop_brick boolean to drop the brick."""
         self.drop_state = True
         return response
-        
+
     def place_walls(self):
-        """Publishes the walls as a marker array in Rviz"""
+        """Publish the walls as a marker array in Rviz."""
         self.m1 = Marker()
         self.m1.header.frame_id = 'world'
         self.m1.header.stamp = self.get_clock().now().to_msg()
@@ -149,7 +149,7 @@ class Arena_Node(Node):
         self.m1.color.g = 0.0
         self.m1.color.b = 1.0
         self.m1.color.a = 1.0
-        
+
         self.m2 = Marker()
         self.m2.header.frame_id = 'world'
         self.m2.header.stamp = self.get_clock().now().to_msg()
@@ -170,7 +170,7 @@ class Arena_Node(Node):
         self.m2.color.g = 0.0
         self.m2.color.b = 1.0
         self.m2.color.a = 1.0
-        
+
         self.m3 = Marker()
         self.m3.header.frame_id = 'world'
         self.m3.header.stamp = self.get_clock().now().to_msg()
@@ -191,7 +191,7 @@ class Arena_Node(Node):
         self.m3.color.g = 1.0
         self.m3.color.b = 0.0
         self.m3.color.a = 1.0
-        
+
         self.m4 = Marker()
         self.m4.header.frame_id = 'world'
         self.m4.header.stamp = self.get_clock().now().to_msg()
@@ -212,10 +212,11 @@ class Arena_Node(Node):
         self.m4.color.g = 1.0
         self.m4.color.b = 0.0
         self.m4.color.a = 1.0
-        
+
         self.marker_array = MarkerArray()
         self.marker_array.markers = [self.m1, self.m2, self.m3, self.m4]
         self.marker_array_pub.publish(self.marker_array)
+
 
 def main(args=None):
     """Entrypoint for the Arena ROS2 node."""
@@ -229,4 +230,3 @@ def main(args=None):
 if __name__ == '__main__':
     import sys
     main(sys.argv)
-    

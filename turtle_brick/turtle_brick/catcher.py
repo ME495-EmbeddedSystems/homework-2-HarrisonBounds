@@ -1,34 +1,41 @@
-"""ROS2 Node that causes the turtle robot to catch the falling brick"""
-"""ROS2 Node that simulates the environment"""
-import rclpy
-from rclpy.node import Node
-import rclpy.parameter
-import rclpy.time
-from rclpy.qos import QoSProfile, QoSDurabilityPolicy
-from geometry_msgs.msg import Point
-from turtlesim.msg import Pose
+"""ROS2 Node that causes the turtle robot to catch the falling brick."""
 import math
-from geometry_msgs.msg import PoseStamped
-from visualization_msgs.msg import Marker
+
 from builtin_interfaces.msg import Duration
 
+from geometry_msgs.msg import Point
+from geometry_msgs.msg import PoseStamped
+
+import rclpy
+import rclpy.parameter
+import rclpy.time
+from rclpy.node import Node
+from rclpy.qos import QoSDurabilityPolicy, QoSProfile
+
+from turtlesim.msg import Pose
+
+from visualization_msgs.msg import Marker
+
 class Arena_Node(Node):
+    """Catch the falling brick."""
+
     def __init__(self):
+        """Initialize the variables needed to catch the falling brick."""
         super().__init__('catcher_node')
         self.frequency = 250
         self.interval = 1/self.frequency
         self._tmr = self.create_timer(self.interval, self.timer_callback)
-        
+
         qos = QoSProfile(depth=10, durability=QoSDurabilityPolicy.TRANSIENT_LOCAL)
-        
-        self.brick_sub = self.create_subscription(Point, "/brick_location_topic", callback=self.brick_state_callback, qos_profile=qos)
+
+        self.brick_sub = self.create_subscription(Point, '/brick_location_topic', callback=self.brick_state_callback, qos_profile=qos)
         self.pose_subscription = self.create_subscription(Pose, '/turtlesim1/turtle1/pose', self.pose_callback, 10)
-        self.goal_pub = self.create_publisher(PoseStamped, "/goal_pose", qos)
-        self.text_pub = self.create_publisher(Marker, "/visualization_marker", qos)
+        self.goal_pub = self.create_publisher(PoseStamped, '/goal_pose', qos)
+        self.text_pub = self.create_publisher(Marker, '/visualization_marker', qos)
         self.goal = None
         self.origin_goal = None
         self.drop_state = False
-        
+
         self.declare_parameter("platform_height", value=2.0)
         self.declare_parameter("max_velocity", value=3.0)
         self.declare_parameter("gravity_accel", value=9.8)
@@ -36,7 +43,7 @@ class Arena_Node(Node):
         self.max_velocity = self.get_parameter("max_velocity").get_parameter_value().double_value
         self.gravity_accel = self.get_parameter("gravity_accel").get_parameter_value().double_value
         self.platform_length = self.platform_height / 10
-        
+
         self.brick_x = 0.0
         self.brick_y = 0.0
         self.brick_z = 0.0
@@ -44,10 +51,9 @@ class Arena_Node(Node):
         self.current_y = 0.0
         self.can_catch = False
         self.run_first = True
-        
-    
+
     def timer_callback(self):
-        #Calculate if the robot can catch the brick or not
+        """Publish goal frame at a fixed frequency."""
         if self.can_catch:
             self.goal = PoseStamped()
             self.goal.header.stamp = self.get_clock().now().to_msg()
@@ -55,7 +61,7 @@ class Arena_Node(Node):
             self.goal.pose.position.x = self.brick_x
             self.goal.pose.position.y = self.brick_y
             self.goal_pub.publish(self.goal)
-            
+
         if self.brick_z <= (self.platform_height + (self.platform_height / (self.platform_height*2)) - self.platform_length):
             self.origin_goal = PoseStamped()
             self.origin_goal.header.stamp = self.get_clock().now().to_msg()
@@ -64,8 +70,9 @@ class Arena_Node(Node):
             self.origin_goal.pose.position.y = 5.45
             self.goal_pub.publish(self.origin_goal)
             self.can_catch = False
-            
+
     def brick_state_callback(self, msg):
+        """Check if the robot can reach the brick in time."""
         self.brick_x = msg.x
         self.brick_y = msg.y
         self.brick_z = msg.z
@@ -75,17 +82,19 @@ class Arena_Node(Node):
             if self.run_first:
                 self.is_catch_valid(z_displacement)
                 self.run_first = False
-            
+
     def pose_callback(self, msg):
+        """Get the current pose of the robot."""
         self.current_x = msg.x
         self.current_y = msg.y
-            
+
     def is_catch_valid(self, h):
+        """Check if the robot is able to get to the brick in time."""
         brick_time = math.sqrt((2 * h) / self.gravity_accel)
-        
+
         robot_distance = self.get_distance_from_goal()
         robot_time = robot_distance / self.max_velocity
-        
+
         if brick_time < robot_time:
             self.get_logger().error("UNREACHABLE")
             self.can_catch = False
@@ -110,12 +119,13 @@ class Arena_Node(Node):
             self.text_pub.publish(self.text_marker)
         else:
             self.can_catch = True
-        
+
     def get_distance_from_goal(self):
+        """Calculate the distance from the robot to the goal."""
         dist = math.sqrt((self.brick_y - self.current_y)**2 + (self.brick_x - self.current_x)**2)
         return dist
-        
-    
+
+
 def main(args=None):
     """Entrypoint for the mynode ROS node."""
     rclpy.init(args=args)
@@ -128,4 +138,3 @@ def main(args=None):
 if __name__ == '__main__':
     import sys
     main(sys.argv)
-    

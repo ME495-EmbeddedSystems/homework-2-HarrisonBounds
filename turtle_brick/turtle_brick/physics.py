@@ -1,3 +1,6 @@
+"""World Class."""
+
+
 class World:
     """Keep track of the physics of the world."""
 
@@ -15,7 +18,7 @@ class World:
         self.gravity = gravity
         self.radius = radius
         self.dt = dt
-        self.velocity = 0.0 #starts at 0 because brick is not moving
+        self.velocity = 0.0
 
     @property
     def brick(self):
@@ -38,16 +41,8 @@ class World:
         self._brick = location
 
     def drop(self):
-        """
-        Update the brick's location by having it fall in gravity for one timestep
-        """
-        
-        #Find bricks velocity
+        """Update the brick's location by having it fall in gravity for one timestep."""
         self.velocity += self.gravity * self.dt
-        
-        #Use kinematic equations to get the new location of the brick. ONLY z direction
+
         fall = (self.velocity * self.dt) + (0.5 * self.gravity * self.dt**2)
         self.brick = (self._brick[0], self._brick[1], self._brick[2] - fall)
-        
-        
-        

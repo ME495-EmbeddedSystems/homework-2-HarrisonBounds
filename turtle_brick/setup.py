@@ -1,3 +1,4 @@
+"""Setup Turtle Brick Package."""
 from setuptools import find_packages, setup
 
 package_name = 'turtle_brick'
@@ -9,15 +10,16 @@ setup(
     data_files=[
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
-        ('share/' + package_name, ['package.xml', 
-                                   'urdf/turtle.urdf.xacro', 
+        ('share/' + package_name, ['package.xml',
+                                   'urdf/turtle.urdf.xacro',
                                    'launch/show_turtle.launch.py',
                                    'config/view_robot.rviz',
                                    'launch/run_turtle.launch.py',
                                    'config/turtle.yaml',
                                    'launch/show_turtle.launch.xml',
                                    'launch/run_turtle.launch.xml',
-                                   'launch/turtle_arena.launch.py']),
+                                   'launch/turtle_arena.launch.py',
+                                   'launch/turtle_arena.launch.xml']),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -28,8 +30,6 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            #Name = <pkg_name>.<module_name>:<function_to_run>
-            #Use this name for your executable in your launch file!!
             'turtle_bot_node = turtle_brick.turtle_robot:main',
             'arena_node = turtle_brick.arena:main',
             'catcher_node = turtle_brick.catcher:main',
