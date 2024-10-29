@@ -16,6 +16,7 @@ from turtlesim.msg import Pose
 
 from visualization_msgs.msg import Marker
 
+
 class Catcher_Node(Node):
     """Catch the falling brick."""
 
@@ -36,9 +37,9 @@ class Catcher_Node(Node):
         self.origin_goal = None
         self.drop_state = False
 
-        self.declare_parameter("platform_height", value=2.0)
-        self.declare_parameter("max_velocity", value=3.0)
-        self.declare_parameter("gravity_accel", value=9.8)
+        self.declare_parameter('platform_height', value=2.0)
+        self.declare_parameter('max_velocity', value=3.0)
+        self.declare_parameter('gravity_accel', value=9.8)
         self.platform_height = self.get_parameter('platform_height').get_parameter_value().double_value
         self.max_velocity = self.get_parameter('max_velocity').get_parameter_value().double_value
         self.gravity_accel = self.get_parameter('gravity_accel').get_parameter_value().double_value
@@ -69,8 +70,6 @@ class Catcher_Node(Node):
             self.origin_goal.pose.position.x = 5.45
             self.origin_goal.pose.position.y = 5.45
             self.goal_pub.publish(self.origin_goal)
-            
-            
             self.can_catch = False
 
     def brick_state_callback(self, msg):
@@ -99,26 +98,27 @@ class Catcher_Node(Node):
 
         if brick_time < robot_time:
             self.get_logger().error('UNREACHABLE')
-            self.can_catch = False
             self.text_marker = Marker()
             self.text_marker.header.frame_id = 'world'
             self.text_marker.header.stamp = self.get_clock().now().to_msg()
-            self.text_marker.id = 10
+            self.text_marker.id = 8
             self.text_marker.type = Marker.TEXT_VIEW_FACING
             self.text_marker.action = Marker.ADD
             self.text_marker.scale.x = 0.0
             self.text_marker.scale.y = 0.0
             self.text_marker.scale.z = 1.0
-            self.text_marker.text = 'UNREACHABLE'
-            self.text_marker.pose.position.x = 5.5
-            self.text_marker.pose.position.y = 5.5
-            self.text_marker.pose.position.z = 1.0
+            self.text_marker.text = 'Unreachable'
+            self.text_marker.pose.position.x = 0.0
+            self.text_marker.pose.position.y = 0.0
+            self.text_marker.pose.position.z = 0.0
             self.text_marker.color.r = 1.0
             self.text_marker.color.g = 0.0
-            self.text_marker.color.b = 1.0
+            self.text_marker.color.b = 0.0
             self.text_marker.color.a = 1.0
-            self.text_marker.lifetime = Duration(seconds=3)
+            #self.text_marker.lifetime = Duration(seconds=3)
             self.text_pub.publish(self.text_marker)
+            self.get_logger().info('Just published marker?')
+            self.can_catch = False
         else:
             self.can_catch = True
 

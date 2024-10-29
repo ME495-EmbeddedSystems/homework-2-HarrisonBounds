@@ -1,10 +1,12 @@
 """Create the arena for the turtle robot."""
+import math
+
 from geometry_msgs.msg import Point, TransformStamped
 
 import rclpy
 import rclpy.parameter
-import rclpy.time
 from rclpy.node import Node
+import rclpy.time
 from rclpy.qos import QoSDurabilityPolicy, QoSProfile
 
 from std_srvs.srv import Empty
@@ -69,8 +71,13 @@ class Arena_Node(Node):
         self.drop_state = False
         self.place_state = False
         self.caught_state = False
-        self.declare_parameter("platform_height", value=2.0)
+        self.can_catch = True
+        self.declare_parameter('platform_height', value=2.0)
+        self.declare_parameter('gravity_accel', value=9.8)
+        self.declare_parameter('max_velocity', value=3.0)
         self.platform_height = self.get_parameter('platform_height').get_parameter_value().double_value
+        self.gravity_accel = self.get_parameter('gravity_accel').get_parameter_value().double_value
+        self.max_velocity = self.get_parameter('max_velocity').get_parameter_value().double_value
         self.platform_length = self.platform_height / 10
 
     def timer_callback(self):
@@ -108,10 +115,12 @@ class Arena_Node(Node):
                 self.location.z = self.world.brick[2]
                 self.brick_location_pub.publish(self.location)
                 self.world.drop()
-            if self.world.brick[2] <= (self.platform_height + (self.platform_height / (self.platform_height*2)) - self.platform_length):
-                self.drop_state = False
-                self.caught_state = True
-                self.place_state = False
+
+            if self.can_catch:
+                if self.world.brick[2] <= (self.platform_height + (self.platform_height / (self.platform_height*2)) - self.platform_length):
+                    self.drop_state = False
+                    self.caught_state = True
+                    self.place_state = False
 
         if self.caught_state:
             world_brick_tf = TransformStamped()
@@ -158,6 +167,16 @@ class Arena_Node(Node):
     def drop_brick(self, request: Empty, response: Empty) -> Empty:
         """Service that toggle the drop_brick boolean to drop the brick."""
         self.drop_state = True
+        z_displacement = self.world.brick[2] - self.platform_height
+        brick_time = math.sqrt((2 * abs(z_displacement)) / self.gravity_accel)
+
+        robot_distance = math.sqrt((self.world.brick[1] - self.delta_y)**2 + (self.world.brick[0] - self.delta_x)**2)
+        robot_time = robot_distance / self.max_velocity
+
+        if brick_time < robot_time:
+            self.can_catch = False
+        else:
+            self.can_catch = True
         return response
 
     def pose_callback(self, msg: Pose):

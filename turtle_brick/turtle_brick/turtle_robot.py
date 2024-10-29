@@ -24,9 +24,6 @@ from tf2_ros.static_transform_broadcaster import StaticTransformBroadcaster
 from turtlesim.msg import Pose
 
 
-
-
-
 class Turtle_Robot_Node(Node):
     """
 
@@ -190,7 +187,7 @@ def quaternion_from_euler(ai: float, aj: float, ak: float) -> list:
     """Return the quaternion based on x, y, and theta.
 
     Args:
-        ai (float): x 
+        ai (float): x
         aj (float): y
         ak (float): theta
 
