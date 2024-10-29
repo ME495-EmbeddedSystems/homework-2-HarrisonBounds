@@ -121,6 +121,26 @@ class Arena_Node(Node):
                     self.drop_state = False
                     self.caught_state = True
                     self.place_state = False
+            else:
+                self.text_marker = Marker()
+                self.text_marker.header.frame_id = 'world'
+                self.text_marker.header.stamp = self.get_clock().now().to_msg()
+                self.text_marker.id = 5
+                self.text_marker.type = Marker.TEXT_VIEW_FACING
+                self.text_marker.action = Marker.ADD
+                self.text_marker.scale.x = 0.0
+                self.text_marker.scale.y = 0.0
+                self.text_marker.scale.z = 1.0
+                self.text_marker.text = 'Unreachable'
+                self.text_marker.pose.position.x = 0.0
+                self.text_marker.pose.position.y = 0.0
+                self.text_marker.pose.position.z = 0.0
+                self.text_marker.color.r = 1.0
+                self.text_marker.color.g = 0.0
+                self.text_marker.color.b = 0.0
+                self.text_marker.color.a = 1.0
+                self.brick_pub.publish(self.text_marker)
+                
 
         if self.caught_state:
             world_brick_tf = TransformStamped()
