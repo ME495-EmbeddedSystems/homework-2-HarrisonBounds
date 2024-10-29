@@ -1,7 +1,7 @@
 # ME495 Embedded Systems Homework 2
-Author: ${Your Name}
+Author: Harrison Bounds
 
-${A brief overview of what the package does}
+This ROS package creates an arena and robot spawned at the origin. It then places, and drops a brick from a specified location. A calculation is then made to determine whether the robot can reach the brick or not.
 
 ## Quickstart
 1. Use `ros2 launch turtle_brick turtle_arena.launch.py` to start the arena and turtle simulation
