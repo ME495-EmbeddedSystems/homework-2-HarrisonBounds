@@ -26,7 +26,7 @@ def generate_launch_description():
         ),
 
         IncludeLaunchDescription(
-            PythonLaunchDescriptionSource([
+            PythonLaunchDescriptionSource([ # unnecessary
                 PathJoinSubstitution([ThisLaunchFileDir(), 'run_turtle.launch.py'])
             ])
         )

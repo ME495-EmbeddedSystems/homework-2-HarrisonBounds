@@ -26,6 +26,7 @@ def generate_launch_description():
             executable='turtle_bot_node',
             name='turtle_bot_node',
         ),
+        # Do not leave commented out code
         # Node(
         #         package='robot_state_publisher',
         #         executable='robot_state_publisher',
@@ -39,7 +40,7 @@ def generate_launch_description():
 
         # Include another launch file
         IncludeLaunchDescription(
-            PythonLaunchDescriptionSource([
+            PythonLaunchDescriptionSource([ # pythonlaunchdescription unneccesary
                 PathJoinSubstitution([ThisLaunchFileDir(), 'show_turtle.launch.py'])
             ])
         )

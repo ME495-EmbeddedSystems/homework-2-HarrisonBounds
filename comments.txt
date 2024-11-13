@@ -1,0 +1,3 @@
+The integration test fails
+The test_physics.py should be in the tests directory as should the test launchfile
+The brick does not slide down the platform after being caught
